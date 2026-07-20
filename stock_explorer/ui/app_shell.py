@@ -10,20 +10,47 @@ from stock_explorer.i18n.navigation import (
     translation_key_for_page,
 )
 
+_LANGUAGE_WIDGET_KEY = "app_language_selector"
 
-def render_language_selector(*, key: str = "app_language") -> str:
+
+def _apply_language_choice(widget_key: str) -> None:
+    """Copy the widget selection to the independent application language state."""
+    choice = st.session_state.get(widget_key)
+    if choice is not None:
+        set_language(str(choice), st.session_state)
+
+
+def render_language_selector(*, key: str = _LANGUAGE_WIDGET_KEY) -> str:
+    """Render the language selector without mutating its widget key afterwards.
+
+    Streamlit owns a widget's session-state key after the widget is instantiated.
+    Therefore the selectbox uses ``app_language_selector`` while the selected
+    application language remains stored separately under ``app_language``.
+    """
     selected = current_language()
     codes = list(SUPPORTED_LANGUAGES)
     if selected not in codes:
         selected = codes[0]
+
+    # Initialize the widget state only before the widget is created.
+    widget_value = st.session_state.get(key)
+    if widget_value not in codes:
+        st.session_state[key] = selected
+
     choice = st.selectbox(
         t("language.label", selected),
         options=codes,
-        index=codes.index(selected),
         format_func=lambda code: t(f"language.{code}", selected),
         key=key,
+        on_change=_apply_language_choice,
+        args=(key,),
     )
-    return set_language(choice, st.session_state)
+
+    # On the first run there is no callback yet. Updating the separate
+    # application-language key is safe because it is not the widget key.
+    if current_language() != choice:
+        set_language(choice, st.session_state)
+    return choice
 
 
 def render_header(version: str) -> None:
