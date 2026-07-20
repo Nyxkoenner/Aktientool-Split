@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from stock_explorer.domain.event_resolution import resolve_events
 from stock_explorer.providers.events import EVENT_COLUMNS, EventProvider, empty_events
 
 
@@ -27,11 +28,7 @@ class EventService:
                 diagnostic_frames.append(result.diagnostics)
         events = pd.concat(event_frames, ignore_index=True) if event_frames else empty_events()
         if not events.empty:
-            events = events.drop_duplicates(
-                subset=["ticker_yahoo", "date", "event_type", "title", "source"],
-                keep="first",
-            )
-            events = events.sort_values("date").reset_index(drop=True)
+            events = resolve_events(events)
         diagnostics = pd.concat(diagnostic_frames, ignore_index=True) if diagnostic_frames else pd.DataFrame()
         return events.reindex(columns=EVENT_COLUMNS), diagnostics
 

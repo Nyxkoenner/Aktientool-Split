@@ -15,8 +15,10 @@ from .events import ManualCsvEventProvider, SecFilingEventProvider, YahooCalenda
 from .fx import FxProvider, YahooFxProvider
 from .http import HttpClient
 from .indexes import CompositeIndexProvider
+from .ir import IrRegistryEventProvider
 from .news import GoogleNewsSearchProvider, RssNewsProvider
 from .sec import SecEdgarProvider, SecProvider
+from .sec_companyfacts import SecCompanyFactsProfileProvider
 from .yahoo import YahooMarketDataProvider
 
 
@@ -51,8 +53,9 @@ def get_sec_provider(
 
 def get_profile_service(name: str | None = None) -> CompanyProfileService:
     provider_name = (name or _configured("AKTIEN_EXPLORER_PROFILE_PROVIDER", "yahoo")).strip().lower()
-    if provider_name == "yahoo":
-        return CompanyProfileService([YahooCompanyProfileProvider()])
+    if provider_name in {"yahoo", "yahoo_sec"}:
+        sec = get_sec_provider()
+        return CompanyProfileService([YahooCompanyProfileProvider(), SecCompanyFactsProfileProvider(sec)])
     raise ValueError(f"Unbekannter Profilanbieter: {provider_name}. Aktuell verfügbar: yahoo")
 
 
@@ -112,13 +115,24 @@ def get_news_service(
 def get_event_service(
     *,
     manual_events_path: Path,
+    ir_sources_path: Path | None = None,
     sec_provider: SecProvider | None = None,
+    headers: dict[str, str] | None = None,
+    http_client: HttpClient | None = None,
 ) -> EventService:
     sec = sec_provider or get_sec_provider()
-    return EventService(
-        [
-            ManualCsvEventProvider(manual_events_path),
-            YahooCalendarEventProvider(),
-            SecFilingEventProvider(sec),
-        ]
-    )
+    providers = [
+        ManualCsvEventProvider(manual_events_path),
+        YahooCalendarEventProvider(),
+        SecFilingEventProvider(sec),
+    ]
+    if ir_sources_path is not None:
+        providers.insert(
+            1,
+            IrRegistryEventProvider(
+                ir_sources_path,
+                headers=headers,
+                http_client=http_client,
+            ),
+        )
+    return EventService(providers)

@@ -23,6 +23,10 @@ class SecProvider(ABC):
     def recent_filings(self, ticker: str, days_back: int = 730) -> tuple[pd.DataFrame, ProviderDiagnostic]:
         raise NotImplementedError
 
+    @abstractmethod
+    def company_facts(self, ticker: str) -> tuple[dict[str, Any], ProviderDiagnostic]:
+        raise NotImplementedError
+
 
 def _clean_ticker(value: Any) -> str:
     return str(value or "").strip().upper().replace("$", "")
@@ -142,5 +146,45 @@ class SecEdgarProvider(SecProvider):
             diagnostic.status = "Fehler"
             diagnostic.message = f"{type(error).__name__}: {error}"
             return pd.DataFrame(), diagnostic
+        finally:
+            diagnostic.duration_ms = round((time.perf_counter() - started) * 1000)
+
+    def company_facts(self, ticker: str) -> tuple[dict[str, Any], ProviderDiagnostic]:
+        symbol = _clean_ticker(ticker)
+        diagnostic = ProviderDiagnostic(
+            source=self.name,
+            kind="official_company_facts",
+            status="Nicht verfügbar",
+            url="https://data.sec.gov/api/xbrl/companyfacts/",
+        )
+        if not symbol or "." in symbol:
+            diagnostic.message = "Nur SEC-gemappte US-Ticker und ADRs ohne Börsensuffix."
+            return {}, diagnostic
+
+        started = time.perf_counter()
+        try:
+            company_map, error = self.company_map()
+            if error:
+                raise RuntimeError(error)
+            match = company_map.get(symbol)
+            if not match:
+                diagnostic.message = f"Kein SEC-CIK für {symbol} gefunden."
+                return {}, diagnostic
+            cik = int(match["cik"])
+            url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
+            diagnostic.url = url
+            response = self._http.get(url, headers=self._headers, timeout=30)
+            diagnostic.http_status = response.status_code
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError("SEC Company Facts enthält kein JSON-Objekt.")
+            diagnostic.entries = len(payload.get("facts", {}).get("us-gaap", {}))
+            diagnostic.matches = diagnostic.entries
+            diagnostic.status = "OK" if diagnostic.entries else "Keine Company Facts"
+            return payload, diagnostic
+        except Exception as error:
+            diagnostic.status = "Fehler"
+            diagnostic.message = f"{type(error).__name__}: {error}"
+            return {}, diagnostic
         finally:
             diagnostic.duration_ms = round((time.perf_counter() - started) * 1000)

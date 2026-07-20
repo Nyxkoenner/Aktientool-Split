@@ -48,7 +48,12 @@ from stock_explorer.providers.registry import (
     get_profile_service,
     get_sec_provider,
 )
-from stock_explorer.ui import render_portfolio_simulation, render_scenario_engine
+from stock_explorer.ui import (
+    render_portfolio_simulation,
+    render_profile_automation,
+    render_scenario_engine,
+    render_source_monitor,
+)
 
 MARKET_PROVIDER = get_market_provider()
 FX_PROVIDER = get_fx_provider()
@@ -61,7 +66,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.2.0"
+APP_VERSION = "6.3.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -2584,7 +2589,9 @@ SEC_TICKER_CACHE_PATH = CACHE_DIR / "sec_company_tickers.json"
 
 EVENT_SERVICE = get_event_service(
     manual_events_path=MANUAL_EVENTS_PATH,
+    ir_sources_path=IR_SOURCES_PATH,
     sec_provider=SEC_PROVIDER,
+    headers=DEFAULT_HEADERS,
 )
 
 SEC_CONTACT_EMAIL = os.getenv("SEC_CONTACT_EMAIL", "contact@example.com")
@@ -3098,12 +3105,8 @@ def fetch_news_bundle(
     locale: str = "de",
     max_items: int = 80,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Lädt Rohmeldungen über austauschbare News-Provider.
-
-    Firmenzuordnung, Sentiment und Ereignisklassifikation bleiben bewusst in der
-    Fachlogik der App. Der Transport zu RSS-/Google-Quellen ist nun modular.
-    """
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=int(days_back))).replace(tzinfo=None)
+    """Lädt und bewertet Unternehmensnews über den modularen NewsService."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=int(days_back))
     ticker = clean_ticker(ticker)
     google_query = None
     if include_google_news:
@@ -3116,202 +3119,14 @@ def fetch_news_bundle(
         google_query=google_query,
         locale=locale,
     )
-    raw_news, diagnostics = service.fetch_raw()
-    if raw_news.empty:
-        return empty_news_frame(), diagnostics
-
-    news_rows: list[dict[str, Any]] = []
-    diagnostics = diagnostics.copy()
-    if "matches" not in diagnostics.columns:
-        diagnostics["matches"] = 0
-    if "uncertain_matches" not in diagnostics.columns:
-        diagnostics["uncertain_matches"] = 0
-
-    raw_news["published"] = pd.to_datetime(raw_news["published"], errors="coerce")
-    raw_news = raw_news.dropna(subset=["published"])
-    raw_news = raw_news[raw_news["published"] >= cutoff]
-
-    source_counts: dict[str, dict[str, int]] = {}
-    for _, entry in raw_news.iterrows():
-        title = str(entry.get("title", "") or "")
-        summary = str(entry.get("summary", "") or "")
-        source_name = str(entry.get("source", "") or "")
-        source_kind = str(entry.get("source_kind", "global") or "global")
-        relevance = evaluate_news_relevance(
-            title=title,
-            summary=summary,
-            company_name=company_name,
-            ticker=ticker,
-            source_kind=source_kind,
-        )
-        if int(relevance["relevance_score"]) < 35:
-            continue
-
-        counters = source_counts.setdefault(source_name, {"matches": 0, "uncertain_matches": 0})
-        if bool(relevance["is_relevant"]):
-            counters["matches"] += 1
-        else:
-            counters["uncertain_matches"] += 1
-
-        sentiment_result = analyze_sentiment(title, summary)
-        combined_text = f"{title} {summary}"
-        news_rows.append(
-            {
-                "published": entry["published"],
-                "ticker_yahoo": ticker,
-                "title": title,
-                "link": str(entry.get("link", "") or ""),
-                "source": source_name,
-                "source_kind": source_kind,
-                "matched_alias": relevance["matched_alias"],
-                "sentiment_score": int(sentiment_result["score"]),
-                "sentiment_label": str(sentiment_result["label"]),
-                "sentiment_confidence": sentiment_result["confidence"],
-                "sentiment_reason": sentiment_result["reason"],
-                "event_type": (
-                    classify_event_from_text(combined_text)
-                    if bool(relevance["is_relevant"])
-                    else "news"
-                ),
-                "relevance_score": relevance["relevance_score"],
-                "relevance_label": relevance["relevance_label"],
-                "relevance_reason": relevance["relevance_reason"],
-                "is_relevant": relevance["is_relevant"],
-            }
-        )
-
-    for source_name, counters in source_counts.items():
-        mask = diagnostics.get("source", pd.Series(dtype=str)).astype(str).eq(source_name)
-        diagnostics.loc[mask, "matches"] = counters["matches"]
-        diagnostics.loc[mask, "uncertain_matches"] = counters["uncertain_matches"]
-        if counters["matches"] == 0 and counters["uncertain_matches"] > 0:
-            diagnostics.loc[mask, "status"] = "Nur unsichere Treffer"
-            diagnostics.loc[mask, "message"] = (
-                "Treffer mit schwachem Firmenbezug werden standardmäßig ausgeblendet."
-            )
-        elif counters["matches"] == 0:
-            diagnostics.loc[mask, "status"] = "Keine Firmen-Treffer"
-
-    news = pd.DataFrame(news_rows) if news_rows else empty_news_frame()
-    if not news.empty:
-        news["_dedupe_key"] = news["title"].map(normalize_for_search)
-        news = (
-            news.sort_values(["relevance_score", "published"], ascending=[False, False])
-            .drop_duplicates("_dedupe_key", keep="first")
-            .drop(columns="_dedupe_key")
-            .sort_values("published", ascending=False)
-            .head(max_items)
-            .reset_index(drop=True)
-        )
-    return news, diagnostics.reset_index(drop=True)
-
-
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
-def fetch_yahoo_calendar_events(ticker: str, days_back: int = 365, days_forward: int = 365) -> pd.DataFrame:
-    """Liest verfügbare Dividenden- und Kalendereinträge defensiv aus yfinance."""
-    ticker = clean_ticker(ticker)
-    now = datetime.now().replace(tzinfo=None)
-    earliest = now - timedelta(days=int(days_back))
-    latest = now + timedelta(days=int(days_forward))
-    rows: list[dict[str, Any]] = []
-
-    try:
-        dividends = fetch_dividends(ticker)
-    except Exception:
-        dividends = pd.DataFrame(columns=["date", "amount"])
-
-    if dividends is not None and not dividends.empty:
-        if isinstance(dividends, pd.DataFrame) and {"date", "amount"}.issubset(dividends.columns):
-            dividend_rows = dividends[["date", "amount"]].copy()
-        else:
-            series = pd.to_numeric(dividends, errors="coerce").dropna()
-            dividend_rows = pd.DataFrame({"date": series.index, "amount": series.values})
-
-        dividend_rows["date"] = pd.to_datetime(dividend_rows["date"], errors="coerce")
-        dividend_rows["amount"] = pd.to_numeric(dividend_rows["amount"], errors="coerce")
-        for _, dividend_row in dividend_rows.dropna(subset=["date", "amount"]).iterrows():
-            date_value = pd.Timestamp(dividend_row["date"]).tz_localize(None).to_pydatetime()
-            value = float(dividend_row["amount"])
-            if earliest <= date_value <= latest:
-                rows.append(
-                    {
-                        "date": date_value,
-                        "ticker_yahoo": ticker,
-                        "event_type": "dividend",
-                        "title": f"Dividende: {format_number(value, 4)} je Aktie",
-                        "source": "Yahoo Finance",
-                        "link": "",
-                        "sentiment_score": 0.0,
-                        "sentiment_label": "neutral",
-                        "importance": "mittel",
-                        "is_future_event": bool(date_value > now),
-                    }
-                )
-
-    # Yahoo liefert Kalenderinformationen nicht für alle Titel und in unter-
-    # schiedlichen Formaten. Deshalb sind diese Zeilen best effort.
-    try:
-        calendar = yf.Ticker(ticker).calendar
-    except Exception:
-        calendar = None
-
-    def add_calendar_dates(value: Any, event_type: str, title: str) -> None:
-        if value is None:
-            return
-        values: list[Any]
-        if isinstance(value, (pd.Series, pd.Index, list, tuple, set)):
-            values = list(value)
-        else:
-            values = [value]
-        for raw_date in values:
-            parsed_date = pd.to_datetime(raw_date, errors="coerce")
-            if pd.isna(parsed_date):
-                continue
-            date_value = pd.Timestamp(parsed_date).tz_localize(None).to_pydatetime()
-            if earliest <= date_value <= latest:
-                rows.append(
-                    {
-                        "date": date_value,
-                        "ticker_yahoo": ticker,
-                        "event_type": event_type,
-                        "title": title,
-                        "source": "Yahoo Finance Calendar",
-                        "link": "",
-                        "sentiment_score": 0.0,
-                        "sentiment_label": "neutral",
-                        "importance": "hoch" if event_type == "earnings" else "mittel",
-                        "is_future_event": bool(date_value > now),
-                    }
-                )
-
-    if isinstance(calendar, pd.DataFrame) and not calendar.empty:
-        for index_value, row in calendar.iterrows():
-            label = str(index_value)
-            values = row.tolist()
-            lowered = label.lower()
-            if "earning" in lowered:
-                add_calendar_dates(values, "earnings", "Quartalszahlen / Earnings")
-            elif "ex-dividend" in lowered or "ex dividend" in lowered:
-                add_calendar_dates(values, "dividend", "Ex-Dividende")
-    elif isinstance(calendar, dict):
-        for key, value in calendar.items():
-            lowered = str(key).lower()
-            if "earning" in lowered:
-                add_calendar_dates(value, "earnings", "Quartalszahlen / Earnings")
-            elif "ex-dividend" in lowered or "ex dividend" in lowered:
-                add_calendar_dates(value, "dividend", "Ex-Dividende")
-
-    events = pd.DataFrame(rows) if rows else empty_events_frame()
-    if not events.empty:
-        events["date"] = pd.to_datetime(events["date"], errors="coerce")
-        events = (
-            events.dropna(subset=["date"])
-            .drop_duplicates(["ticker_yahoo", "date", "event_type", "title"])
-            .sort_values("date", ascending=False)
-            .reset_index(drop=True)
-        )
-    return events
-
+    extra_aliases = news_identity_aliases(company_name, ticker)
+    return service.fetch_company_news(
+        ticker=ticker,
+        company_name=company_name,
+        cutoff=cutoff,
+        extra_aliases=extra_aliases,
+        max_items=max_items,
+    )
 
 def news_to_events(news: pd.DataFrame, ticker: str) -> pd.DataFrame:
     """Übernimmt nur relevante, konkret klassifizierte Nachrichten in den Kalender."""
@@ -9855,21 +9670,7 @@ def fetch_verified_event_bundle(
         days_back=max(days_back, 730),
         days_forward=days_forward,
     )
-    # Registrierte Unternehmens-IR-Feeds bleiben vorerst als Legacy-Adapter
-    # erhalten und werden in V6.3 als eigener Provider ausgelagert.
-    ir_events, ir_diagnostics = fetch_registered_ir_events(
-        ticker,
-        days_back=max(days_back, 730),
-        days_forward=days_forward,
-    )
-    events = normalize_events_frame(
-        pd.concat([provider_events, ir_events], ignore_index=True)
-    )
-    diagnostics = pd.concat(
-        [provider_diagnostics, ir_diagnostics],
-        ignore_index=True,
-    )
-    return events, diagnostics
+    return normalize_events_frame(provider_events), provider_diagnostics
 
 
 def _event_type_label(value: Any) -> str:
@@ -11284,8 +11085,8 @@ def render_deep_company_profiles(data: pd.DataFrame) -> None:
     c5.metric("Profilabdeckung", format_percent(coverage, 0))
 
     sections = [
-        "Überblick", "Finanztrend", "Segmente & Regionen", "Ownership & Management",
-        "Analysten", "Risiken & eigene Analyse", "Datenstatus",
+        "Überblick", "Finanztrend", "Automatische Anreicherung", "Segmente & Regionen",
+        "Ownership & Management", "Analysten", "Risiken & eigene Analyse", "Datenstatus",
     ]
     key = "deep_company_profile_section"
     if st.session_state.get(key) not in sections:
@@ -11355,6 +11156,9 @@ def render_deep_company_profiles(data: pd.DataFrame) -> None:
 
     elif section == "Finanztrend":
         _render_financial_trend(ticker, currency)
+
+    elif section == "Automatische Anreicherung":
+        render_profile_automation(ticker, enrichment)
 
     elif section == "Segmente & Regionen":
         _render_segments_regions_editor(ticker)
@@ -12453,7 +12257,7 @@ def main() -> None:
     # Streamlit-Rerun erhalten, zum Beispiel nach dem Aktualisieren der News.
     main_pages = [
         "Überblick", "Datenstatus", "Fundamentaldaten", "Aktienprofile", "Einzelanalyse", "Sektoren",
-        "News & Events", "Portfolio", "Portfolio-Simulation", "Szenarien", "Watchlist", "Value-Scanner", "Deep Value", "Backtesting", "Mustervergleich", "Lernmodul", "Unternehmensprofile", "Superinvestoren", "Research",
+        "News & Events", "Datenquellen", "Portfolio", "Portfolio-Simulation", "Szenarien", "Watchlist", "Value-Scanner", "Deep Value", "Backtesting", "Mustervergleich", "Lernmodul", "Unternehmensprofile", "Superinvestoren", "Research",
     ]
     if st.session_state.get("main_navigation") not in main_pages:
         st.session_state["main_navigation"] = main_pages[0]
@@ -12481,6 +12285,14 @@ def main() -> None:
         render_sector_view(data, histories)
     elif active_page == "News & Events":
         render_news(data)
+    elif active_page == "Datenquellen":
+        render_source_monitor(
+            data,
+            global_news_sources=GLOBAL_RSS_SOURCES,
+            headers=DEFAULT_HEADERS,
+            manual_events_path=MANUAL_EVENTS_PATH,
+            ir_sources_path=IR_SOURCES_PATH,
+        )
     elif active_page == "Portfolio":
         render_portfolio(data, histories)
     elif active_page == "Portfolio-Simulation":

@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.3.0
+
+- Firmenzuordnung, News-Relevanz, Sentiment und Ereignisklassifikation in `domain/news_analysis.py` ausgelagert.
+- Offizielle Unternehmens-IR-Feeds und ICS-Kalender als austauschbarer Event-Provider.
+- Konflikt- und Prioritätslogik für Ereignisse in `domain/event_resolution.py`.
+- SEC Company Facts als zweite automatische Profilquelle für US-Unternehmen und ADRs.
+- Neuer Provider-Monitor für News-, Event- und Profilquellen in der Streamlit-Oberfläche.
+- Neuer Profilbereich „Automatische Anreicherung“ mit offiziellen SEC-Finanzreihen.
+- Quellen-Gesundheitsscore und transparentere Providerdiagnose.
+- 24 automatisierte Tests für Provider-, Domain- und Service-Logik.
+
 ## 6.2.0
 
 - Austauschbare Provider für FX, Indizes, News, Events, SEC und Unternehmensprofile.
