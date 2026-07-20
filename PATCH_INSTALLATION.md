@@ -1,103 +1,117 @@
-# Aktien Explorer V6.7 – Geschäftsbericht- und Profilautomatisierung
+# V6.8-Patch installieren
 
-Dieser Patch setzt einen funktionierenden Stand **V6.6.1** voraus.
+Dieser Patch setzt einen funktionierenden Stand **V6.7** voraus.
 
-## Installation
+## 1. Vorbereiten
 
-1. Streamlit im Terminal mit `Strg + C` stoppen.
-2. Das Patch-ZIP entpacken.
-3. Den gesamten Inhalt des entpackten Ordners in den bestehenden Projektordner kopieren.
-4. Beim Kopieren das Ersetzen vorhandener Dateien bestätigen.
-5. Die virtuelle Umgebung aktivieren und Abhängigkeiten aktualisieren:
+Streamlit im Terminal mit `Strg + C` stoppen. Optional einen neuen Git-Branch anlegen:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-.\scripts\check.ps1
-python -m streamlit run app.py
+git switch main
+git pull origin main
+git switch -c feature/news-events-v68
 ```
 
-## Ersetzte Dateien
+## 2. Dateien kopieren
+
+Den Inhalt dieses Patch-Ordners in den bestehenden Projektordner
+`Aktien_Explorer_V6_0_1_modular/` kopieren. Die Ordnerstruktur entspricht bereits
+den Zielpfaden. Vorhandene Dateien ersetzen.
+
+### Ersetzte Dateien
 
 ```text
 .gitignore
 README.md
 CHANGELOG.md
-requirements.txt
 stock_explorer/__init__.py
 stock_explorer/legacy_app.py
 stock_explorer/domain/__init__.py
+stock_explorer/domain/news_analysis.py
 stock_explorer/providers/registry.py
 stock_explorer/services/__init__.py
 stock_explorer/ui/__init__.py
 stock_explorer/i18n/translations.py
 ```
 
-## Neue Dateien
+### Neue Dateien
 
 ```text
-stock_explorer/domain/report_analysis.py
-stock_explorer/providers/annual_reports.py
-stock_explorer/services/report_service.py
-stock_explorer/ui/annual_report_automation.py
+stock_explorer/domain/news_intelligence.py
+stock_explorer/domain/market_reaction.py
+stock_explorer/providers/article_text.py
+stock_explorer/services/event_database.py
+stock_explorer/services/news_intelligence_service.py
+stock_explorer/ui/news_intelligence.py
 
-tests/test_report_analysis_v67.py
-tests/test_annual_report_provider_v67.py
-tests/test_report_service_v67.py
+tests/test_news_intelligence_v68.py
+tests/test_market_reaction_v68.py
+tests/test_event_database_v68.py
+tests/test_article_text_provider_v68.py
 ```
 
-## Verwendung
-
-1. Index- und Marktdaten laden.
-2. **Unternehmensprofile** öffnen.
-3. Eine Aktie auswählen.
-4. Den Profilbereich **Automatische Anreicherung** öffnen.
-5. Entweder einen textbasierten PDF-/HTML-/TXT-Bericht hochladen oder bei einem SEC-gemappten US-Ticker den neuesten offiziellen Jahresbericht laden.
-6. Risiken, Chancen, Abhängigkeiten, Segmente und Regionen am Originalbericht prüfen.
-7. Nur bestätigte Segment- oder Regionszeilen speichern.
-8. Optional einen Analyse-Snapshot speichern oder qualitative Erkenntnisse ins Unternehmensprofil übernehmen.
-
-## Lokale Speicherung
-
-Analyse-Snapshots werden unter folgendem Pfad gespeichert:
-
-```text
-data/company_documents/
-```
-
-Dieser Ordner ist in `.gitignore` eingetragen und wird nicht nach GitHub hochgeladen.
-
-Strukturierte Ergebnisse werden weiterhin in diesen Dateien gespeichert:
-
-```text
-data/company_profiles.csv
-data/company_segments.csv
-data/company_regions.csv
-```
-
-## Einschränkungen
-
-- Gescannte PDFs benötigen vorher eine OCR-Texterkennung. Die App führt selbst keine OCR aus.
-- Tabellen in PDFs werden nicht immer korrekt als Zeilen extrahiert.
-- Segment-, Regions- und Risikokandidaten sind heuristisch und müssen am Originaldokument bestätigt werden.
-- SEC-Abrufe benötigen eine Kontaktadresse in `SEC_CONTACT_EMAIL`.
-- Die Analyse ist eine Recherchehilfe und keine Anlageberatung.
-
-## Git
-
-Empfohlener Branch:
+## 3. Prüfen
 
 ```powershell
-git switch main
-git pull origin main
-git switch -c feature/company-reports-v67
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+.\scripts\check.ps1
 ```
 
-Nach erfolgreichem Test:
+Der geprüfte Patch liefert:
+
+```text
+57 Tests bestanden
+Ruff erfolgreich
+Mypy erfolgreich
+Syntaxprüfung erfolgreich
+```
+
+## 4. App testen
+
+```powershell
+python -m streamlit run app.py
+```
+
+Danach:
+
+1. Einen Index und eine Aktie laden.
+2. `News & Events` öffnen.
+3. News aktualisieren.
+4. Den Unterbereich `Analyse 2.0` öffnen.
+5. Ereigniscluster, Quellenvertrauen und Kursreaktionen prüfen.
+6. Optional einen Textauszug einer Primärquelle auf Nutzeraktion laden.
+7. Die Analyse in der lokalen Ereignisdatenbank speichern.
+
+Die Datenbank liegt unter:
+
+```text
+data/events_database/
+```
+
+Dieser Ordner ist in `.gitignore` enthalten.
+
+## 5. Commit und Push
 
 ```powershell
 git status
 git add .
-git commit -m "V6.7 Geschäftsbericht- und Profilautomatisierung"
-git push -u origin feature/company-reports-v67
+git commit -m "V6.8 News- und Eventanalyse 2.0"
+git push -u origin feature/news-events-v68
 ```
+
+Nach dem Merge in `main` optional taggen:
+
+```powershell
+git switch main
+git pull origin main
+git tag -a v6.8.0 -m "News- und Eventanalyse 2.0"
+git push origin v6.8.0
+```
+
+## Hinweise
+
+- Der Volltextabruf erfolgt nur für eine einzelne ausgewählte Quelle nach ausdrücklicher Nutzeraktion.
+- Vollständige fremde Artikel werden nicht in der Ereignisdatenbank gespeichert.
+- Kursreaktionen zeigen historische Bewegungen, aber keine nachgewiesene Kausalität.
+- Quellenvertrauen, Ton und Aktienwirkung sind heuristische Recherchehilfen.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.8.0
+
+- News- und Ereigniscluster mit quellenübergreifender Deduplizierung.
+- Getrennte Bewertung von Nachrichtenton und möglicher Aktienwirkung.
+- Erweiterte Ereignistaxonomie für Prognosen, Gewinnwarnungen, Dividenden, Rückkäufe, Kapitalmaßnahmen, M&A, Management, Regulierung und Produktzulassungen.
+- Quellenvertrauen von 0 bis 100 mit nachvollziehbarer Quellenkategorie.
+- Kursreaktionen nach 1, 5 und 20 Handelstagen sowie Überrenditen zur Index-Benchmark.
+- Volatilitätsvergleich und maximaler Rückgang nach historischen Ereignissen.
+- Lokale Ereignisdatenbank unter `data/events_database/` mit atomarem Schreiben und Deduplizierung.
+- Begrenzter Volltextabruf einer einzelnen Primärquelle auf ausdrückliche Nutzeraktion.
+- Deutsche und englische Oberfläche sowie sechs neue Tests für Klassifikation, Clustering, Marktreaktion, Persistenz und Textextraktion.
+
 ## 6.7.0
 
 - Automatischer Import textbasierter PDF-, HTML- und TXT-Geschäftsberichte.

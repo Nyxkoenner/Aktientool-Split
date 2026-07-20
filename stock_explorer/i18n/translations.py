@@ -383,6 +383,50 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "profile_auto.dividends_paid": "Gezahlte Dividenden",
         "profile_auto.download": "Offizielle Finanzreihe als CSV herunterladen",
         "profile_auto.warnings": "Provider-Hinweise",
+        "news_v2.title": "News- und Ereignisanalyse 2.0",
+        "news_v2.caption": (
+            "Führt Mehrfachmeldungen zusammen, trennt Nachrichtenton und mögliche Aktienwirkung und misst "
+            "historische Kursreaktionen gegenüber {benchmark}."
+        ),
+        "news_v2.no_events": "Im aktuellen Zeitraum wurden keine ausreichend relevanten Ereigniscluster erkannt.",
+        "news_v2.metric.clusters": "Ereigniscluster",
+        "news_v2.metric.official": "Hohes Quellenvertrauen",
+        "news_v2.metric.negative": "Negative Aktienwirkung",
+        "news_v2.metric.reactions": "Mit Kursreaktion",
+        "news_v2.filter.event": "Ereignistyp",
+        "news_v2.filter.impact": "Mögliche Aktienwirkung",
+        "news_v2.filter.trust": "Min. Quellenvertrauen",
+        "news_v2.filter.multi": "Nur mehrere Quellen",
+        "news_v2.column.event": "Ereignis",
+        "news_v2.column.title": "Titel",
+        "news_v2.column.tone": "Nachrichtenton",
+        "news_v2.column.impact": "Aktienwirkung",
+        "news_v2.column.trust": "Quellenvertrauen",
+        "news_v2.column.sources": "Quellen",
+        "news_v2.column.excess20": "Überrendite 20T",
+        "news_v2.filtered_empty": "Kein Ereignis erfüllt die aktuellen Filter.",
+        "news_v2.detail.select": "Ereignis für Detailansicht",
+        "news_v2.primary_source": "Primärquelle",
+        "news_v2.sources_detail": "Zusammengeführte Quellen",
+        "news_v2.open_source": "Quelle öffnen",
+        "news_v2.source_summary": "Quellenübersicht",
+        "news_v2.fulltext.load": "Textauszug der Primärquelle abrufen",
+        "news_v2.fulltext.loading": "Textauszug wird geladen …",
+        "news_v2.fulltext.chars": "Extrahierte Zeichen",
+        "news_v2.fulltext.excerpt": "Begrenzter Textauszug",
+        "news_v2.fulltext.notice": (
+            "Der Text wird nur auf Nutzeraktion abgerufen und nicht vollständig in der Ereignisdatenbank gespeichert. "
+            "Paywalls, Nutzungsbedingungen und Quellenrechte bleiben zu beachten."
+        ),
+        "news_v2.database.save": "Analyse in lokaler Ereignisdatenbank speichern",
+        "news_v2.database.saved": "Gespeichert: {events} Ereignisse und {articles} Quellenmeldungen.",
+        "news_v2.database.status": (
+            "Lokale Ereignisdatenbank: zuletzt {timestamp} · {events} Ereignisse · {articles} Quellenmeldungen"
+        ),
+        "news_v2.disclaimer": (
+            "Ton, Aktienwirkung und Quellenvertrauen sind heuristische Recherchehilfen. Kursreaktionen zeigen "
+            "historische Marktbewegungen und keine Kausalität oder Prognose."
+        ),
     },
     "en": {
         "app.title": "Stock Explorer",
@@ -757,6 +801,50 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "profile_auto.dividends_paid": "Dividends paid",
         "profile_auto.download": "Download official financial series as CSV",
         "profile_auto.warnings": "Provider notes",
+        "news_v2.title": "News and event analysis 2.0",
+        "news_v2.caption": (
+            "Clusters duplicate reports, separates article tone from potential stock impact and measures "
+            "historical market reactions versus {benchmark}."
+        ),
+        "news_v2.no_events": "No sufficiently relevant event clusters were identified in the selected period.",
+        "news_v2.metric.clusters": "Event clusters",
+        "news_v2.metric.official": "High source trust",
+        "news_v2.metric.negative": "Negative stock impact",
+        "news_v2.metric.reactions": "With market reaction",
+        "news_v2.filter.event": "Event type",
+        "news_v2.filter.impact": "Potential stock impact",
+        "news_v2.filter.trust": "Minimum source trust",
+        "news_v2.filter.multi": "Multiple sources only",
+        "news_v2.column.event": "Event",
+        "news_v2.column.title": "Title",
+        "news_v2.column.tone": "Article tone",
+        "news_v2.column.impact": "Stock impact",
+        "news_v2.column.trust": "Source trust",
+        "news_v2.column.sources": "Sources",
+        "news_v2.column.excess20": "20D excess return",
+        "news_v2.filtered_empty": "No event matches the current filters.",
+        "news_v2.detail.select": "Select event for details",
+        "news_v2.primary_source": "Primary source",
+        "news_v2.sources_detail": "Clustered sources",
+        "news_v2.open_source": "Open source",
+        "news_v2.source_summary": "Source summary",
+        "news_v2.fulltext.load": "Fetch text excerpt from primary source",
+        "news_v2.fulltext.loading": "Loading text excerpt …",
+        "news_v2.fulltext.chars": "Extracted characters",
+        "news_v2.fulltext.excerpt": "Limited text excerpt",
+        "news_v2.fulltext.notice": (
+            "Text is fetched only after a user action and is not stored in full in the event database. "
+            "Paywalls, terms of use and source rights still apply."
+        ),
+        "news_v2.database.save": "Save analysis to local event database",
+        "news_v2.database.saved": "Saved {events} events and {articles} source reports.",
+        "news_v2.database.status": (
+            "Local event database: last saved {timestamp} · {events} events · {articles} source reports"
+        ),
+        "news_v2.disclaimer": (
+            "Tone, stock impact and source trust are heuristic research aids. Market reactions show historical "
+            "movements, not causality or a forecast."
+        ),
     },
 }
 

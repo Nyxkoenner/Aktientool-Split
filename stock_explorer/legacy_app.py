@@ -40,6 +40,7 @@ from dateutil import parser as dateparser
 
 from stock_explorer.providers.events import SecFilingEventProvider
 from stock_explorer.providers.registry import (
+    get_article_text_provider,
     get_company_report_service,
     get_event_service,
     get_fx_provider,
@@ -50,12 +51,14 @@ from stock_explorer.providers.registry import (
     get_sec_provider,
 )
 from stock_explorer.i18n import current_language, t
+from stock_explorer.services import NewsIntelligenceService
 from stock_explorer.ui import (
     normalize_page_id,
     render_annual_report_automation,
     render_header,
     render_language_selector,
     render_main_navigation,
+    render_news_intelligence,
     render_portfolio_simulation,
     render_profile_automation,
     render_scenario_engine,
@@ -73,7 +76,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.7.0"
+APP_VERSION = "6.8.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -85,6 +88,7 @@ WATCHLIST_PATH = DATA_DIR / "watchlist.csv"
 PORTFOLIO_PATH = ROOT_DIR / "portfolio.csv"
 RESEARCH_CASES_PATH = DATA_DIR / "research_cases.csv"
 BACKTEST_DIR = DATA_DIR / "backtests"
+EVENT_DATABASE_DIR = DATA_DIR / "events_database"
 BACKTEST_RUNS_PATH = BACKTEST_DIR / "backtest_runs.csv"
 COMPANY_PROFILE_PATH = DATA_DIR / "company_profiles.csv"
 COMPANY_SEGMENTS_PATH = DATA_DIR / "company_segments.csv"
@@ -92,7 +96,7 @@ COMPANY_REGIONS_PATH = DATA_DIR / "company_regions.csv"
 SUPERINVESTOR_REGISTRY_PATH = DATA_DIR / "superinvestors.csv"
 SUPERINVESTOR_TICKER_MAP_PATH = DATA_DIR / "superinvestor_ticker_map.csv"
 
-for directory in (DATA_DIR, INDEX_DIR, CACHE_DIR, BACKTEST_DIR):
+for directory in (DATA_DIR, INDEX_DIR, CACHE_DIR, BACKTEST_DIR, EVENT_DATABASE_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
 REPORT_SERVICE = get_company_report_service(data_dir=DATA_DIR)
@@ -104,6 +108,9 @@ DEFAULT_HEADERS = {
         "Chrome/120.0.0.0 Safari/537.36"
     )
 }
+
+ARTICLE_TEXT_PROVIDER = get_article_text_provider(headers=DEFAULT_HEADERS)
+NEWS_INTELLIGENCE_SERVICE = NewsIntelligenceService.with_directory(EVENT_DATABASE_DIR)
 
 DEFAULT_DRAWDOWN_TRIGGER = 25.0
 DEFAULT_PAYOUT_MAX = 90.0
@@ -9945,7 +9952,11 @@ def render_event_source_management(ticker: str, company_name: str) -> None:
             key=f"download_ir_template_{ticker}",
         )
 
-def render_news(df: pd.DataFrame) -> None:
+def render_news(
+    df: pd.DataFrame,
+    histories: dict[str, pd.DataFrame],
+    index_name: str,
+) -> None:
     st.subheader("News & Ereignisse")
     st.caption(
         "Relevante Unternehmensnews und Kalendertermine werden nach Quellenqualität getrennt. "
@@ -9968,6 +9979,9 @@ Starke Phrasen werden höher gewichtet und Überschriften zählen stärker als B
     ticker = company_selectbox("Aktie für News", df, key="news_ticker")
     row = df.loc[df["ticker_yahoo"] == ticker].iloc[0]
     company_name = str(row.get("name", ticker))
+    price_history = histories.get(ticker, pd.DataFrame())
+    benchmark_ticker = benchmark_for_index(index_name)
+    benchmark_history = fetch_benchmark_history(benchmark_ticker, period="5y")
 
     controls_left, controls_right = st.columns([2, 1])
     with controls_left:
@@ -10016,6 +10030,13 @@ Starke Phrasen werden höher gewichtet und Überschriften zählen stärker als B
             events_ok, events_message = persist_events(events, replace_ticker=ticker)
             snapshot_path = NEWS_SNAPSHOT_DIR / f"{ticker.replace('.', '_')}.csv"
             snapshot_ok, snapshot_message = safe_write_csv(news, snapshot_path)
+            intelligence = NEWS_INTELLIGENCE_SERVICE.analyze(
+                news,
+                ticker=ticker,
+                price_history=price_history,
+                benchmark_history=benchmark_history,
+                persist=True,
+            )
             st.session_state[key] = {
                 "news": news,
                 "diagnostics": diagnostics,
@@ -10023,6 +10044,11 @@ Starke Phrasen werden höher gewichtet und Überschriften zählen stärker als B
                 "loaded_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
                 "snapshot_warning": "" if snapshot_ok else snapshot_message,
                 "events_warning": "" if events_ok else events_message,
+                "intelligence_saved_at": (
+                    intelligence.database_snapshot.saved_at
+                    if intelligence.database_snapshot is not None
+                    else ""
+                ),
             }
 
     bundle = st.session_state.get(key)
@@ -10082,7 +10108,7 @@ Starke Phrasen werden höher gewichtet und Überschriften zählen stärker als B
     active_sentiment_filter = render_news_summary(ticker, company_name, relevant_news, uncertain_news, events, diagnostics)
 
     # Auch die Unternavigation des News-Bereichs bleibt bei Reruns erhalten.
-    news_views = ["Aktuelle News", "Kalender", "Quellen & Diagnose", "Export"]
+    news_views = ["Aktuelle News", "Analyse 2.0", "Kalender", "Quellen & Diagnose", "Export"]
     if st.session_state.get("news_navigation") not in news_views:
         st.session_state["news_navigation"] = news_views[0]
 
@@ -10143,6 +10169,17 @@ Starke Phrasen werden höher gewichtet und Überschriften zählen stärker als B
                 )
                 for index, (_, item) in enumerate(uncertain_news.iterrows(), start=1000):
                     render_news_card(item, index)
+
+    elif active_news_view == "Analyse 2.0":
+        render_news_intelligence(
+            relevant_news,
+            ticker=ticker,
+            price_history=price_history,
+            benchmark_history=benchmark_history,
+            benchmark_label=benchmark_ticker,
+            database_dir=EVENT_DATABASE_DIR,
+            article_provider=ARTICLE_TEXT_PROVIDER,
+        )
 
     elif active_news_view == "Kalender":
         st.caption("Bevorzuge grün markierte offizielle Quellen. Yahoo-Termine und aus News abgeleitete Ereignisse dienen als Ergänzung und sollten gegengeprüft werden.")
@@ -12301,7 +12338,7 @@ def main() -> None:
     elif active_page == "sectors":
         render_sector_view(data, histories)
     elif active_page == "news":
-        render_news(data)
+        render_news(data, histories, index_name)
     elif active_page == "sources":
         render_source_monitor(
             data,

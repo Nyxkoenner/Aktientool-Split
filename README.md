@@ -1,4 +1,4 @@
-# Aktien Explorer V6.7
+# Aktien Explorer V6.8
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
@@ -79,7 +79,7 @@ templates/transactions_v2_template.csv
 .\scripts\check.ps1
 ```
 
-Der Prüflauf umfasst 34 Tests sowie Ruff, Mypy und Syntaxprüfung.
+Der Prüflauf umfasst 57 Tests sowie Ruff, Mypy und Syntaxprüfung.
 
 ## Szenario-Engine 2.0
 
@@ -106,3 +106,25 @@ Kandidaten müssen vor dem Speichern manuell bestätigt werden. Analyse-Snapshot
 werden lokal unter `data/company_documents/` gespeichert. Gescannte PDFs benötigen
 vor dem Import OCR; die App führt selbst keine OCR aus. Die Ergebnisse ersetzen
 keine Prüfung des Originalberichts.
+
+## News- und Eventanalyse 2.0
+
+Ab Version 6.8 enthält der Bereich **News & Events → Analyse 2.0** eine
+strukturierte Ereignisintelligenz:
+
+- ähnliche Meldungen mehrerer Quellen werden zu einem Ereigniscluster zusammengeführt
+- Nachrichtenton und mögliche Aktienwirkung werden getrennt ausgewiesen
+- erweiterte Ereignistypen wie Gewinnwarnung, Prognoseänderung, Dividendenänderung,
+  Kapitalerhöhung, Rückkauf, Managementwechsel und Regulierung
+- Quellenvertrauen von 0 bis 100 mit Kennzeichnung offizieller, etablierter,
+  anbieterseitiger und aggregierter Quellen
+- historische Kursreaktionen nach 1, 5 und 20 Handelstagen
+- Überrendite gegenüber der Index-Benchmark
+- Volatilität und maximaler Rückgang nach dem Ereignis
+- lokaler, deduplizierter Ereignisspeicher unter `data/events_database/`
+- optionaler, begrenzter Volltextabruf einer einzelnen Primärquelle auf Nutzeraktion
+
+Der lokale Ereignisspeicher enthält nur Titel, kurze Feed-Zusammenfassungen,
+Quellenmetadaten und abgeleitete Analysewerte. Vollständige fremde Artikel werden
+nicht gespeichert. Ton, Aktienwirkung und Kursreaktion sind Research-Hilfen und
+belegen weder Kausalität noch eine zukünftige Entwicklung.
