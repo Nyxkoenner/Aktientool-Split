@@ -6315,7 +6315,7 @@ def render_research(df: pd.DataFrame, histories: dict[str, pd.DataFrame], index_
     benchmark_metrics = compute_return_metrics(comparison["Benchmark"])
     table = pd.DataFrame(
         [
-            {"Serie": f"{df.loc[df["ticker_yahoo"] == ticker, "name"].iloc[0]} ({ticker})", "Rendite": company_metrics["return_pct"], "Volatilität": company_metrics["volatility_pct"], "Max. Drawdown": company_metrics["max_drawdown_pct"]},
+            {"Serie": f"{df.loc[df['ticker_yahoo'] == ticker, 'name'].iloc[0]} ({ticker})", "Rendite": company_metrics["return_pct"], "Volatilität": company_metrics["volatility_pct"], "Max. Drawdown": company_metrics["max_drawdown_pct"]},
             {"Serie": benchmark_ticker, "Rendite": benchmark_metrics["return_pct"], "Volatilität": benchmark_metrics["volatility_pct"], "Max. Drawdown": benchmark_metrics["max_drawdown_pct"]},
         ]
     )

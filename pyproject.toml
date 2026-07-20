@@ -4,7 +4,7 @@ addopts = "-q --disable-warnings --maxfail=1"
 
 [tool.ruff]
 line-length = 110
-target-version = "py313"
+target-version = "py311"
 extend-exclude = ["stock_explorer/legacy_app.py"]
 
 [tool.ruff.lint]
@@ -17,11 +17,19 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 ignore_missing_imports = true
 check_untyped_defs = true
 warn_unused_ignores = true
 exclude = ["stock_explorer/legacy_app.py"]
+# NumPy 2.5 uses modern type-alias syntax in its bundled .pyi files.
+# Respect follow_imports="skip" for stubs so a Python-3.11 target does not
+# fail while parsing third-party NumPy annotations. Project modules remain checked.
+follow_imports_for_stubs = true
+
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = "stock_explorer.legacy_app"
