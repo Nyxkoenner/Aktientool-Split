@@ -92,3 +92,13 @@
 - frei konfigurierbares individuelles Szenario
 - vollständige deutsche und englische Übersetzung des neuen Moduls
 - neue Domain-, Service- und Kalibrierungstests
+
+## 6.9.0
+
+- Neues zweisprachiges KI-/RL-Labor mit expanding Walk-forward-Tests.
+- Eingebaute Q-Learning-Baseline mit den Aktionen Verkaufen/Cash, Halten und Kaufen/Investiert.
+- Vergleich gegen Buy-and-Hold, Momentum, Drawdown-Recovery und eine kombinierte Regelstrategie.
+- Transaktionskosten, Downside-Strafe, reproduzierbarer Zufalls-Seed und einstellbare Trainings-/Testfenster.
+- Out-of-Sample-Kennzahlen für Rendite, Volatilität, Sharpe, Drawdown, Investitionsquote, Positionswechsel und Turnover.
+- Bewusster Schutz vor Look-ahead-Bias: heutige Fundamental-Scores werden nicht als historische Trainingsmerkmale verwendet.
+- Lokale, nicht versionierte Speicherung von Forschungsruns unter `data/ai_lab/`.

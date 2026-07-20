@@ -22,6 +22,7 @@ MAIN_NAVIGATION: tuple[NavigationItem, ...] = (
     NavigationItem("portfolio", "nav.portfolio", "Portfolio"),
     NavigationItem("portfolio_sim", "nav.portfolio_sim", "Portfolio-Simulation"),
     NavigationItem("scenarios", "nav.scenarios", "Szenarien"),
+    NavigationItem("ai_lab", "nav.ai_lab", "KI-/RL-Labor"),
     NavigationItem("watchlist", "nav.watchlist", "Watchlist"),
     NavigationItem("value_scanner", "nav.value_scanner", "Value-Scanner"),
     NavigationItem("deep_value", "nav.deep_value", "Deep Value"),

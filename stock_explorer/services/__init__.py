@@ -1,5 +1,12 @@
 """Application services for provider orchestration and scenario analysis."""
 
+from .ai_lab_service import (
+    AILabResult,
+    FoldSummary,
+    WalkForwardConfig,
+    run_ai_lab,
+    save_ai_lab_run,
+)
 from .event_database import EventDatabase, EventDatabaseSnapshot
 from .news_intelligence_service import NewsIntelligenceBundle, NewsIntelligenceService
 from .report_service import CompanyReportService, ReportAnalysisBundle
@@ -15,4 +22,9 @@ __all__ = [
     "ScenarioAnalysis",
     "analyze_scenario",
     "snapshot_from_row",
+    "AILabResult",
+    "FoldSummary",
+    "WalkForwardConfig",
+    "run_ai_lab",
+    "save_ai_lab_run",
 ]

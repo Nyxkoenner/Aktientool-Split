@@ -54,6 +54,7 @@ from stock_explorer.i18n import current_language, t
 from stock_explorer.services import NewsIntelligenceService
 from stock_explorer.ui import (
     normalize_page_id,
+    render_ai_lab,
     render_annual_report_automation,
     render_header,
     render_language_selector,
@@ -76,7 +77,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.8.0"
+APP_VERSION = "6.9.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -89,6 +90,7 @@ PORTFOLIO_PATH = ROOT_DIR / "portfolio.csv"
 RESEARCH_CASES_PATH = DATA_DIR / "research_cases.csv"
 BACKTEST_DIR = DATA_DIR / "backtests"
 EVENT_DATABASE_DIR = DATA_DIR / "events_database"
+AI_LAB_DIR = DATA_DIR / "ai_lab"
 BACKTEST_RUNS_PATH = BACKTEST_DIR / "backtest_runs.csv"
 COMPANY_PROFILE_PATH = DATA_DIR / "company_profiles.csv"
 COMPANY_SEGMENTS_PATH = DATA_DIR / "company_segments.csv"
@@ -96,7 +98,7 @@ COMPANY_REGIONS_PATH = DATA_DIR / "company_regions.csv"
 SUPERINVESTOR_REGISTRY_PATH = DATA_DIR / "superinvestors.csv"
 SUPERINVESTOR_TICKER_MAP_PATH = DATA_DIR / "superinvestor_ticker_map.csv"
 
-for directory in (DATA_DIR, INDEX_DIR, CACHE_DIR, BACKTEST_DIR, EVENT_DATABASE_DIR):
+for directory in (DATA_DIR, INDEX_DIR, CACHE_DIR, BACKTEST_DIR, EVENT_DATABASE_DIR, AI_LAB_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
 REPORT_SERVICE = get_company_report_service(data_dir=DATA_DIR)
@@ -12364,6 +12366,8 @@ def main() -> None:
         )
     elif active_page == "scenarios":
         render_scenario_engine(data)
+    elif active_page == "ai_lab":
+        render_ai_lab(data, market_provider=MARKET_PROVIDER, storage_dir=AI_LAB_DIR)
     elif active_page == "watchlist":
         render_watchlist(
             data,

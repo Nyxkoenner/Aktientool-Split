@@ -1,5 +1,6 @@
 """Streamlit-Oberflächenmodule des Aktien Explorers."""
 
+from .ai_lab import render_ai_lab
 from .annual_report_automation import render_annual_report_automation
 from .app_shell import (
     MAIN_NAVIGATION,
@@ -28,4 +29,5 @@ __all__ = [
     "render_profile_automation",
     "render_scenario_engine",
     "render_source_monitor",
+    "render_ai_lab",
 ]

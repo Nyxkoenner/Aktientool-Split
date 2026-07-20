@@ -128,3 +128,19 @@ Der lokale Ereignisspeicher enthält nur Titel, kurze Feed-Zusammenfassungen,
 Quellenmetadaten und abgeleitete Analysewerte. Vollständige fremde Artikel werden
 nicht gespeichert. Ton, Aktienwirkung und Kursreaktion sind Research-Hilfen und
 belegen weder Kausalität noch eine zukünftige Entwicklung.
+
+## V6.9 – KI-/Reinforcement-Learning-Labor
+
+Der neue Navigationsbereich **KI-/RL-Labor** vergleicht einfache, nachvollziehbare Regelstrategien mit einem eingebauten Q-Learning-Agenten. Die Analyse verwendet expanding Walk-forward-Fenster: Der Agent wird ausschließlich mit früheren Daten trainiert und anschließend im folgenden Testfenster bewertet.
+
+Verglichen werden:
+
+- Buy-and-Hold
+- Momentum-Regel
+- Drawdown-Recovery-Regel
+- kombinierte Trend-/Recovery-Regel
+- Q-Learning-Agent
+
+Das Modul ist bewusst eine Forschungsumgebung und kein Signalgeber. Heutige Value-, Growth-, Momentum-, Safety- oder Deep-Value-Scores werden lediglich als Kontext angezeigt. Ohne historische Point-in-Time-Fundamentaldaten würden diese Werte im Training einen Rückschaufehler erzeugen.
+
+Optional gespeicherte Läufe liegen unter `data/ai_lab/` und werden durch `.gitignore` nicht nach GitHub übertragen.

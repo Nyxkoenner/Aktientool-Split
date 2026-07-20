@@ -849,6 +849,195 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
 }
 
 
+_AI_LAB_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
+    "de": {
+        "nav.ai_lab": "KI-/RL-Labor",
+        "ai.title": "KI-/Reinforcement-Learning-Labor",
+        "ai.caption": (
+            "Vergleicht transparente Regelstrategien mit einem eingebauten Q-Learning-Agenten in "
+            "expanding Walk-forward-Tests. Nur außerhalb der Trainingsfenster erzielte Ergebnisse werden verglichen."
+        ),
+        "ai.research_warning": (
+            "Research-Modul: Die Ergebnisse sind keine Kauf-, Halte- oder Verkaufsempfehlung. "
+            "Ein gutes historisches Testergebnis kann durch Überanpassung, Datenfehler und veränderte Marktbedingungen entstehen."
+        ),
+        "ai.load_data": "Bitte zuerst Index- und Marktdaten laden.",
+        "ai.history_hint": (
+            "Standardmäßig nutzt das Labor die bereits geladenen Kursdaten. Für belastbarere Walk-forward-Tests "
+            "kannst du die maximal verfügbare Historie separat laden."
+        ),
+        "ai.load_max_history": "Maximale Historie laden",
+        "ai.loading_history": "Lade vollständige Kurshistorie …",
+        "ai.history_loaded": "{count} historische Kurspunkte geladen.",
+        "ai.history_error": "Für diesen Ticker konnte keine längere Historie geladen werden.",
+        "ai.no_history": "Für das KI-Labor fehlen mindestens rund 260 Handelstage Kursdaten.",
+        "ai.settings": "Walk-forward- und Trainingsparameter",
+        "ai.training_years": "Anfängliche Trainingsjahre",
+        "ai.test_months": "Testfenster in Monaten",
+        "ai.step_months": "Weiterrollen alle Monate",
+        "ai.episodes": "Q-Learning-Episoden je Fold",
+        "ai.costs": "Handelskosten in Basispunkten",
+        "ai.downside_penalty": "Strafe für negative Tagesrenditen",
+        "ai.seed": "Zufalls-Seed",
+        "ai.run": "Walk-forward-Analyse starten",
+        "ai.running": "Trainiere und teste Strategien ausschließlich auf den jeweiligen Out-of-Sample-Fenstern …",
+        "ai.error": "KI-Labor konnte nicht ausgeführt werden: {error}",
+        "ai.run_prompt": "Starte die Analyse, um Baselines und Q-Learning außerhalb der Trainingsdaten zu vergleichen.",
+        "ai.metric.folds": "Test-Folds",
+        "ai.metric.period": "Out-of-Sample-Zeitraum",
+        "ai.metric.best": "Beste historische Strategie",
+        "ai.metric.q_states": "Gelernte Zustände",
+        "ai.metric.q_return": "Q-Learning-Rendite",
+        "ai.comparison": "Strategievergleich außerhalb der Trainingsdaten",
+        "ai.strategy.buy_hold": "Buy & Hold",
+        "ai.strategy.momentum": "Momentum-Regel",
+        "ai.strategy.recovery": "Drawdown-Recovery-Regel",
+        "ai.strategy.combined": "Kombinierte Regel",
+        "ai.strategy.q_learning": "Q-Learning-Agent",
+        "ai.column.strategy": "Strategie",
+        "ai.column.total_return": "Gesamtrendite",
+        "ai.column.annualized": "Rendite p.a.",
+        "ai.column.volatility": "Volatilität p.a.",
+        "ai.column.sharpe": "Sharpe",
+        "ai.column.drawdown": "Max. Drawdown",
+        "ai.column.exposure": "Investitionsquote",
+        "ai.column.trades": "Positionswechsel",
+        "ai.column.turnover": "Umschlag",
+        "ai.column.date": "Datum",
+        "ai.column.equity": "Modellwert",
+        "ai.chart_equity": "Out-of-Sample-Modellwert · Start 100",
+        "ai.folds": "Ergebnisse je Walk-forward-Fold",
+        "ai.fold.number": "Fold",
+        "ai.fold.train_start": "Training Start",
+        "ai.fold.train_end": "Training Ende",
+        "ai.fold.test_start": "Test Start",
+        "ai.fold.test_end": "Test Ende",
+        "ai.fold.train_rows": "Trainingstage",
+        "ai.fold.test_rows": "Testtage",
+        "ai.fold.q_return": "Q-Learning",
+        "ai.fold.buy_hold": "Buy & Hold",
+        "ai.fold.momentum": "Momentum",
+        "ai.explanation": "Wie das Labor arbeitet",
+        "ai.explanation_text": (
+            "**Zustand:** Trend zu SMA 50/200, 20-Tage-Momentum, Volatilität, Drawdown und aktuelle Position.  \n"
+            "**Aktionen:** verkaufen/auf Cash wechseln, Position halten oder vollständig investieren.  \n"
+            "**Belohnung:** nächste Tagesrendite abzüglich Handelskosten und einer einstellbaren Downside-Strafe.  \n"
+            "**Walk-forward:** Der Agent wird nur mit früheren Daten trainiert und anschließend im nächsten Zeitfenster getestet. "
+            "Danach wird das Trainingsfenster erweitert."
+        ),
+        "ai.action": "Aktion",
+        "ai.action.count": "Anzahl im Test",
+        "ai.action.sell": "Verkaufen / Cash",
+        "ai.action.hold": "Halten",
+        "ai.action.buy": "Kaufen / investiert",
+        "ai.no_fundamental_leakage": (
+            "Heutige Aktien-Scores werden nur als Kontext angezeigt und bewusst nicht als historische Trainingsmerkmale genutzt. "
+            "Ohne Point-in-Time-Fundamentaldaten würde dies einen Rückschaufehler erzeugen."
+        ),
+        "ai.save": "Analyse lokal speichern",
+        "ai.saved": "Analyse gespeichert: {path}",
+        "ai.disclaimer": (
+            "Das Q-Learning-Modell ist absichtlich einfach und dient als überprüfbare Forschungsbaseline. "
+            "Es berücksichtigt keine Steuern, Slippage, Liquiditätsgrenzen, Short-Positionen oder fundamentale Point-in-Time-Daten."
+        ),
+    },
+    "en": {
+        "nav.ai_lab": "AI / RL lab",
+        "ai.title": "AI / reinforcement-learning lab",
+        "ai.caption": (
+            "Compares transparent rule-based strategies with a built-in Q-learning agent using expanding "
+            "walk-forward tests. Only results generated outside the training windows are compared."
+        ),
+        "ai.research_warning": (
+            "Research module: results are not buy, hold or sell recommendations. Strong historical results may be caused "
+            "by overfitting, data errors or changing market regimes."
+        ),
+        "ai.load_data": "Load index and market data first.",
+        "ai.history_hint": (
+            "The lab initially uses the price data already loaded by the app. Load the maximum available history "
+            "separately for more meaningful walk-forward tests."
+        ),
+        "ai.load_max_history": "Load maximum history",
+        "ai.loading_history": "Loading full price history …",
+        "ai.history_loaded": "Loaded {count} historical price observations.",
+        "ai.history_error": "No longer history could be loaded for this ticker.",
+        "ai.no_history": "The AI lab requires at least roughly 260 trading days of price data.",
+        "ai.settings": "Walk-forward and training parameters",
+        "ai.training_years": "Initial training years",
+        "ai.test_months": "Test-window months",
+        "ai.step_months": "Roll forward every months",
+        "ai.episodes": "Q-learning episodes per fold",
+        "ai.costs": "Trading costs in basis points",
+        "ai.downside_penalty": "Negative daily-return penalty",
+        "ai.seed": "Random seed",
+        "ai.run": "Run walk-forward analysis",
+        "ai.running": "Training and evaluating strategies exclusively on their out-of-sample windows …",
+        "ai.error": "AI lab failed: {error}",
+        "ai.run_prompt": "Run the analysis to compare baselines and Q-learning outside the training data.",
+        "ai.metric.folds": "Test folds",
+        "ai.metric.period": "Out-of-sample period",
+        "ai.metric.best": "Best historical strategy",
+        "ai.metric.q_states": "Learned states",
+        "ai.metric.q_return": "Q-learning return",
+        "ai.comparison": "Out-of-sample strategy comparison",
+        "ai.strategy.buy_hold": "Buy and hold",
+        "ai.strategy.momentum": "Momentum rule",
+        "ai.strategy.recovery": "Drawdown-recovery rule",
+        "ai.strategy.combined": "Combined rule",
+        "ai.strategy.q_learning": "Q-learning agent",
+        "ai.column.strategy": "Strategy",
+        "ai.column.total_return": "Total return",
+        "ai.column.annualized": "Annualised return",
+        "ai.column.volatility": "Annualised volatility",
+        "ai.column.sharpe": "Sharpe",
+        "ai.column.drawdown": "Maximum drawdown",
+        "ai.column.exposure": "Market exposure",
+        "ai.column.trades": "Position changes",
+        "ai.column.turnover": "Turnover",
+        "ai.column.date": "Date",
+        "ai.column.equity": "Model value",
+        "ai.chart_equity": "Out-of-sample model value · start 100",
+        "ai.folds": "Results by walk-forward fold",
+        "ai.fold.number": "Fold",
+        "ai.fold.train_start": "Training start",
+        "ai.fold.train_end": "Training end",
+        "ai.fold.test_start": "Test start",
+        "ai.fold.test_end": "Test end",
+        "ai.fold.train_rows": "Training days",
+        "ai.fold.test_rows": "Test days",
+        "ai.fold.q_return": "Q-learning",
+        "ai.fold.buy_hold": "Buy and hold",
+        "ai.fold.momentum": "Momentum",
+        "ai.explanation": "How the lab works",
+        "ai.explanation_text": (
+            "**State:** SMA 50/200 trend, 20-day momentum, volatility, drawdown and current position.  \n"
+            "**Actions:** sell/move to cash, hold the current position or invest fully.  \n"
+            "**Reward:** next-day return minus trading costs and a configurable downside penalty.  \n"
+            "**Walk-forward:** The agent is trained only on earlier observations and tested in the following period. "
+            "The training window is then expanded."
+        ),
+        "ai.action": "Action",
+        "ai.action.count": "Count in test",
+        "ai.action.sell": "Sell / cash",
+        "ai.action.hold": "Hold",
+        "ai.action.buy": "Buy / invested",
+        "ai.no_fundamental_leakage": (
+            "Today's stock scores are displayed as context only and are deliberately excluded from historical training. "
+            "Using them without point-in-time fundamentals would introduce look-ahead bias."
+        ),
+        "ai.save": "Save analysis locally",
+        "ai.saved": "Analysis saved: {path}",
+        "ai.disclaimer": (
+            "The Q-learning model is intentionally simple and serves as an auditable research baseline. "
+            "It does not model taxes, slippage, liquidity constraints, short positions or point-in-time fundamentals."
+        ),
+    },
+}
+
+for _language, _messages in _AI_LAB_TRANSLATIONS.items():
+    TRANSLATIONS[_language].update(_messages)
+
+
 def normalize_language(language: str | None) -> str:
     value = str(language or DEFAULT_LANGUAGE).strip().lower()
     return value if value in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
