@@ -20,7 +20,9 @@ def _number(value: Any, default: float = 0.0) -> float:
 def _company_options(data: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
     frame = data[["ticker_yahoo", "name"]].dropna(subset=["ticker_yahoo"]).drop_duplicates("ticker_yahoo")
     names = frame.set_index("ticker_yahoo")["name"].fillna("").astype(str).to_dict()
-    options = sorted(frame["ticker_yahoo"].astype(str).tolist(), key=lambda item: names.get(item, item).lower())
+    options = sorted(
+        frame["ticker_yahoo"].astype(str).tolist(), key=lambda item: names.get(item, item).lower()
+    )
     return options, names
 
 
@@ -131,9 +133,13 @@ def render_scenario_engine(data: pd.DataFrame) -> None:
             )
         )
         m1, m2, m3 = st.columns(3)
-        m1.metric("Modellpreis", f"{custom.estimated_price:,.2f}" if custom.estimated_price is not None else "–")
+        m1.metric(
+            "Modellpreis", f"{custom.estimated_price:,.2f}" if custom.estimated_price is not None else "–"
+        )
         m2.metric("Kumulierte Dividenden", f"{custom.estimated_dividends:,.2f}")
         m3.metric(
             "Modellhafte Gesamtrendite",
-            f"{custom.estimated_total_return_pct:+.1f} %" if custom.estimated_total_return_pct is not None else "–",
+            f"{custom.estimated_total_return_pct:+.1f} %"
+            if custom.estimated_total_return_pct is not None
+            else "–",
         )

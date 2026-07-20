@@ -39,7 +39,10 @@ def simulate_buy_and_hold(
     clean_weights /= clean_weights.sum()
     returns = prices.pct_change().fillna(0.0)
     dividend_yields = pd.Series(
-        {ticker: max(float((annual_dividend_yields or {}).get(ticker, 0.0)), 0.0) / 100.0 for ticker in tickers}
+        {
+            ticker: max(float((annual_dividend_yields or {}).get(ticker, 0.0)), 0.0) / 100.0
+            for ticker in tickers
+        }
     )
     daily_dividends = dividend_yields / 252.0
 

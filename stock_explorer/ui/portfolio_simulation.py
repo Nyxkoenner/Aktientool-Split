@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -38,7 +36,11 @@ def render_portfolio_simulation(
     frame = holdings.copy()
     frame["ticker_yahoo"] = frame["ticker_yahoo"].astype(str)
     frame["shares"] = pd.to_numeric(frame.get("shares"), errors="coerce").fillna(0.0)
-    price_map = market_data.drop_duplicates("ticker_yahoo").set_index("ticker_yahoo").get("last_price", pd.Series(dtype=float))
+    price_map = (
+        market_data.drop_duplicates("ticker_yahoo")
+        .set_index("ticker_yahoo")
+        .get("last_price", pd.Series(dtype=float))
+    )
     frame["market_value"] = frame.apply(
         lambda row: row["shares"] * float(price_map.get(row["ticker_yahoo"], 0.0) or 0.0), axis=1
     )
@@ -67,7 +69,9 @@ def render_portfolio_simulation(
     initial_capital = c1.number_input("Startkapital", 1_000.0, 10_000_000.0, 10_000.0, 1_000.0)
     years = c2.slider("Historie in Jahren", 1, 5, 3)
     fee_bps = c3.slider("Handelskosten je Umschichtung (Basispunkte)", 0, 100, 10)
-    frequency_label = c4.selectbox("Rebalancing", ["Kein Rebalancing", "Monatlich", "Quartalsweise", "Jährlich"])
+    frequency_label = c4.selectbox(
+        "Rebalancing", ["Kein Rebalancing", "Monatlich", "Quartalsweise", "Jährlich"]
+    )
     frequency_map = {"Kein Rebalancing": None, "Monatlich": "M", "Quartalsweise": "Q", "Jährlich": "Y"}
     cutoff = prices.index.max() - pd.DateOffset(years=years)
     prices = prices.loc[prices.index >= cutoff]
@@ -75,7 +79,10 @@ def render_portfolio_simulation(
     yield_map: dict[str, float] = {}
     if "dividend_yield" in market_data.columns:
         yield_map = (
-            market_data.drop_duplicates("ticker_yahoo").set_index("ticker_yahoo")["dividend_yield"].fillna(0.0).to_dict()
+            market_data.drop_duplicates("ticker_yahoo")
+            .set_index("ticker_yahoo")["dividend_yield"]
+            .fillna(0.0)
+            .to_dict()
         )
     hold = simulate_buy_and_hold(prices, weights, initial_capital, None, fee_bps, yield_map)
     rebalanced = simulate_buy_and_hold(
@@ -84,13 +91,21 @@ def render_portfolio_simulation(
 
     metrics = st.columns(4)
     metrics[0].metric("Buy & Hold Endwert", f"{hold.final_value:,.0f}")
-    metrics[1].metric("Rebalancing Endwert", f"{rebalanced.final_value:,.0f}", f"{rebalanced.final_value-hold.final_value:+,.0f}")
+    metrics[1].metric(
+        "Rebalancing Endwert",
+        f"{rebalanced.final_value:,.0f}",
+        f"{rebalanced.final_value - hold.final_value:+,.0f}",
+    )
     metrics[2].metric("Max. Drawdown Rebalancing", f"{rebalanced.max_drawdown_pct:.1f} %")
     metrics[3].metric("Geschätzte Dividenden", f"{rebalanced.dividends_received:,.0f}")
 
-    chart_frame = pd.concat(
-        [hold.equity_curve.rename("Buy & Hold"), rebalanced.equity_curve.rename("Rebalancing")], axis=1
-    ).reset_index(names="Datum").melt("Datum", var_name="Strategie", value_name="Depotwert")
+    chart_frame = (
+        pd.concat(
+            [hold.equity_curve.rename("Buy & Hold"), rebalanced.equity_curve.rename("Rebalancing")], axis=1
+        )
+        .reset_index(names="Datum")
+        .melt("Datum", var_name="Strategie", value_name="Depotwert")
+    )
     chart = (
         alt.Chart(chart_frame)
         .mark_line()
