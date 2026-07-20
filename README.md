@@ -1,8 +1,8 @@
-# Aktien Explorer V6.4
+# Aktien Explorer V6.5
 
-V6.4 führt eine zentrale Deutsch-/Englisch-Umschaltung ein und lagert den
-App-Rahmen sowie die sprachunabhängige Navigation aus der großen
-`legacy_app.py` aus.
+V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
+Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
+weiterhin verfügbar.
 
 ## Installation
 
@@ -13,60 +13,70 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-## Sprache umschalten
+## Portfolio-Simulation 2.0
 
-Die Sprache wird oben in der Sidebar ausgewählt und bleibt bei Streamlit-Reruns
-erhalten. Unterstützt werden aktuell:
+Im Bereich **Portfolio-Simulation** stehen nun zwei Modelle zur Verfügung:
 
-- Deutsch (`de`)
-- English (`en`)
+1. **Transaktionsbuch 2.0**
+   - Käufe und Verkäufe zu ihren tatsächlichen Daten
+   - Ein- und Auszahlungen
+   - explizite Gebühren
+   - zusätzliche Handelskosten in Basispunkten
+   - historisch geladene Dividenden
+   - optionale Dividenden-Reinvestition
+   - Modellsteuer auf Dividenden
+   - Cash-Konto
+   - historische FX-Umrechnung über den konfigurierten FX-Provider
+   - Aktiensplits als Ledger-Ereignis
+   - TWR, XIRR, Drawdown, Beiträge, Gebühren und Dividenden
+   - Vergleich mit DAX, S&P 500, MSCI-World-ETF oder eigenem Benchmark-Ticker
 
-Optional kann die Standardsprache gesetzt werden:
+2. **Gewichtungsmodell**
+   - bisheriger Buy-and-Hold-/Rebalancing-Vergleich anhand heutiger Gewichte
 
-```powershell
-$env:AKTIEN_EXPLORER_LANGUAGE="en"
-python -m streamlit run app.py
-```
+## Erweitertes Transaktionsformat
 
-## Neue Struktur
+Die bestehende Datei `data/transactions.csv` bleibt kompatibel. Zusätzlich werden
+folgende Ereignistypen unterstützt:
 
 ```text
-stock_explorer/
-├── i18n/
-│   ├── context.py
-│   ├── formatting.py
-│   ├── navigation.py
-│   └── translations.py
-└── ui/
-    └── app_shell.py
+BUY
+SELL
+DEPOSIT
+WITHDRAWAL
+DIVIDEND
+FEE
+SPLIT
 ```
 
-## Bereits vollständig lokalisiert
+Zusätzliche optionale Spalte:
 
-- App-Kopf und Hauptnavigation
-- zentrale Sidebar-Einstellungen
-- Datenquellen-Monitor
-- Szenario-Engine
-- Portfolio-Simulation
-- automatische Profilanreicherung
-- zentrale Zahlen- und Datumsformatierung der neuen Module
+```text
+cash_amount
+```
 
-Die älteren, noch nicht aus `legacy_app.py` ausgelagerten Detailansichten bleiben
-vorübergehend teilweise deutsch. Das Übersetzungssystem ist so aufgebaut, dass
-diese Bereiche in den nächsten Auslagerungsschritten ohne erneute Architekturänderung
-umgestellt werden können.
+Für `DEPOSIT`, `WITHDRAWAL`, `DIVIDEND` und `FEE` enthält `cash_amount` den
+Geldbetrag. Fehlt die Spalte, wird aus Kompatibilitätsgründen `price` als Betrag
+verwendet.
 
-## Stabile Navigation
+Eine Vorlage liegt unter:
 
-Im Session State werden keine sichtbaren deutschen oder englischen Labels mehr
-gespeichert, sondern stabile Seiten-IDs wie `analysis`, `news` oder `scenarios`.
-Dadurch bleibt der aktive Bereich auch beim Sprachwechsel und bei Reruns erhalten.
+```text
+templates/transactions_v2_template.csv
+```
 
-## Qualitätssicherung
+## Wichtige Modellgrenzen
+
+- Steuerregeln werden nur als frei einstellbare Dividendenquote modelliert.
+- Quellensteuer, Verlustverrechnung und individuelle Brokerabrechnungen sind nicht enthalten.
+- Kapitalmaßnahmen müssen als Transaktion beziehungsweise Split dokumentiert werden.
+- Historische FX- und Dividendeninformationen hängen vom gewählten Datenanbieter ab.
+- Die Ergebnisse sind Recherchehilfen und keine steuerliche oder Anlageberatung.
+
+## Qualitätsprüfung
 
 ```powershell
 .\scripts\check.ps1
 ```
 
-Der Prüflauf umfasst 29 Tests sowie Ruff, Mypy und Syntaxprüfung. Mypy prüft nun
-zusätzlich die Pakete `stock_explorer/i18n` und `stock_explorer/ui`.
+Der Prüflauf umfasst 34 Tests sowie Ruff, Mypy und Syntaxprüfung.

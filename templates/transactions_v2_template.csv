@@ -1,0 +1,6 @@
+date,ticker_yahoo,type,shares,price,currency,fees,cash_amount,comment
+2026-01-01,,DEPOSIT,,,EUR,,10000,Initial deposit
+2026-01-02,ALV.DE,BUY,10,245.50,EUR,4.90,,Example purchase
+2026-06-01,ALV.DE,DIVIDEND,,,EUR,,120.00,Optional explicit dividend
+2026-07-01,ALV.DE,SELL,2,280.00,EUR,4.90,,Example partial sale
+2026-08-01,,WITHDRAWAL,,,EUR,,500.00,Example withdrawal
