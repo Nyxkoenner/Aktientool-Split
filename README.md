@@ -1,4 +1,4 @@
-# Aktien Explorer V7.1
+# Aktien Explorer V7.2
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
@@ -43,6 +43,34 @@ Vorbereitete Feature- und Walk-forward-Pläne werden zwischengespeichert. Der
 Cache kann direkt im Labor geleert werden. Technische Fehler werden in einem
 rotierenden lokalen Protokoll unter `data/logs/stock_explorer.log` erfasst. Der
 Log-Ordner ist nicht Teil der Git-Versionierung.
+
+## AI-Lab 2.0 und persistente Modelle V7.2
+
+Das KI-/RL-Labor kann nun Q-Learning-Modellversionen pro Aktie lokal unter
+`data/ai_models/` speichern. Die Dateien verwenden ein nachvollziehbares,
+komprimiertes JSON-Format; unsichere Pickle-Dateien werden nicht verwendet.
+
+Verfügbare Aktionen:
+
+- **vollständig neu trainieren:** erzeugt eine unabhängige neue Modellversion
+- **kontrolliert weitertrainieren:** übernimmt die bestehende Q-Tabelle und nutzt
+  ausschließlich Übergänge nach dem gespeicherten Datenstand
+- **nur auswerten:** misst das gespeicherte Modell ausschließlich auf danach
+  hinzugekommenen Handelstagen
+- **Versionen vergleichen:** zeigt Datenstand, Zustände, Trainingsumfang und die
+  Übereinstimmung der Modellaktionen
+- **Version löschen:** entfernt genau die ausgewählte lokale Modelldatei
+
+Vor jedem Nachtraining prüft die App Ticker, Merkmalsdefinition, Modellschema,
+Lern-/Kostenparameter, Datenüberlappung und neue Beobachtungen. Episodenzahl und
+Zufalls-Seed dürfen für einen neuen Nachtrainingslauf geändert werden; Änderungen
+an Zustands-, Lern- oder Kostenparametern erfordern bewusst ein vollständiges
+Neutraining. Es findet weder im Hintergrund noch beim App-Start automatisches
+Training statt.
+
+Die Walk-forward-Auswertung bleibt von den persistenten Produktionsmodellen
+getrennt und ist weiterhin die maßgebliche historische Validierung. Gespeicherte
+Modelle und Modellaktionen sind keine Anlage- oder Handelssignale.
 
 ## Installation
 

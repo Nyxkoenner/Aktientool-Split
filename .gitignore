@@ -21,3 +21,6 @@ data/ai_lab/
 
 # Rotating local application logs
 data/logs/
+
+# Local persistent AI/RL model versions
+data/ai_models/
