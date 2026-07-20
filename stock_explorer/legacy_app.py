@@ -71,7 +71,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.5.0"
+APP_VERSION = "6.6.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 

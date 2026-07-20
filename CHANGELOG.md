@@ -57,3 +57,14 @@
 ## 6.0.1
 
 - Python-3.13-, Ruff- und Mypy-Konfiguration korrigiert.
+
+## 6.6.0
+
+- sektorspezifische Szenario- und Prognose-Engine 2.0
+- vorkonfigurierte Stressfälle für Rezession, Zinsen, Inflation, Margendruck, Dividendenkürzung, Schuldenabbau, Bewertung und Währung
+- getrennte Modelle für Banken, Versicherungen, Immobilien, Technologie, Industrie, Versorger, Energie, Konsum und Gesundheit
+- schwache, mittlere und starke Modellbandbreiten
+- historische Plausibilitätsprüfung mit rollierenden Haltedauerrenditen, Volatilität und Drawdown
+- frei konfigurierbares individuelles Szenario
+- vollständige deutsche und englische Übersetzung des neuen Moduls
+- neue Domain-, Service- und Kalibrierungstests
