@@ -1,5 +1,6 @@
 """Pure domain models and calculations."""
 
+from .report_analysis import ReportAnalysis, StructuredCandidate, TextFinding, analyze_report_text
 from .scenario_calibration import HistoricalCalibration, calibrate_history
 from .scenario_models import (
     CompanyScenarioSnapshot,
@@ -12,6 +13,10 @@ from .scenario_models import (
 )
 
 __all__ = [
+    "ReportAnalysis",
+    "StructuredCandidate",
+    "TextFinding",
+    "analyze_report_text",
     "CompanyScenarioSnapshot",
     "HistoricalCalibration",
     "ScenarioOutcome",

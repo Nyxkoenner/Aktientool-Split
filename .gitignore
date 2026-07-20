@@ -10,5 +10,6 @@ htmlcov/
 .streamlit/secrets.toml
 data/backtests/
 data/news_snapshots/
+data/company_documents/
 portfolio.csv
 .idea/

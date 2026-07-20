@@ -40,6 +40,7 @@ from dateutil import parser as dateparser
 
 from stock_explorer.providers.events import SecFilingEventProvider
 from stock_explorer.providers.registry import (
+    get_company_report_service,
     get_event_service,
     get_fx_provider,
     get_index_service,
@@ -51,6 +52,7 @@ from stock_explorer.providers.registry import (
 from stock_explorer.i18n import current_language, t
 from stock_explorer.ui import (
     normalize_page_id,
+    render_annual_report_automation,
     render_header,
     render_language_selector,
     render_main_navigation,
@@ -71,7 +73,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.6.0"
+APP_VERSION = "6.7.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -92,6 +94,8 @@ SUPERINVESTOR_TICKER_MAP_PATH = DATA_DIR / "superinvestor_ticker_map.csv"
 
 for directory in (DATA_DIR, INDEX_DIR, CACHE_DIR, BACKTEST_DIR):
     directory.mkdir(parents=True, exist_ok=True)
+
+REPORT_SERVICE = get_company_report_service(data_dir=DATA_DIR)
 
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -11161,6 +11165,7 @@ def render_deep_company_profiles(data: pd.DataFrame) -> None:
 
     elif section == "Automatische Anreicherung":
         render_profile_automation(ticker, enrichment)
+        render_annual_report_automation(ticker, company_name, REPORT_SERVICE)
 
     elif section == "Segmente & Regionen":
         _render_segments_regions_editor(ticker)
