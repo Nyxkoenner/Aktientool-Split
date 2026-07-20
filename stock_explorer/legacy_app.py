@@ -71,7 +71,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.4.0"
+APP_VERSION = "6.5.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -12311,7 +12311,15 @@ def main() -> None:
         holdings, _, warnings = portfolio_input()
         for warning in warnings:
             st.warning(warning)
-        render_portfolio_simulation(data, histories, holdings)
+        render_portfolio_simulation(
+            data,
+            histories,
+            holdings,
+            transactions_path=TRANSACTIONS_PATH,
+            market_provider=MARKET_PROVIDER,
+            fx_provider=FX_PROVIDER,
+            base_currency=BASE_CURRENCY,
+        )
     elif active_page == "scenarios":
         render_scenario_engine(data)
     elif active_page == "watchlist":

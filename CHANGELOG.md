@@ -1,5 +1,18 @@
 # Changelog
 
+## 6.5.0
+
+- Ereignisbasierte Portfolio-Simulation aus `data/transactions.csv`.
+- Cash-Konto, Ein- und Auszahlungen sowie automatische Kauf-Finanzierung.
+- Historische Dividenden mit optionaler Reinvestition und Modellsteuer.
+- Historische FX-Umrechnung über den modularen FX-Provider.
+- Unterstützung für BUY, SELL, DEPOSIT, WITHDRAWAL, DIVIDEND, FEE und SPLIT.
+- Zeitgewichtete Rendite (TWR) und geldgewichtete Rendite (XIRR).
+- Vergleich mit DAX, S&P 500, MSCI-World-ETF oder eigenem Benchmark.
+- Bestehendes Gewichtungs-/Rebalancing-Modell bleibt als zweiter Modus erhalten.
+- Neuer `PortfolioSimulationService` und neue UI-unabhängige Ledger-Domainlogik.
+- Fünf zusätzliche Tests für Ledger, Dividenden, XIRR und Provider-Orchestrierung.
+
 ## 6.4.0
 
 - Zentrale Deutsch-/Englisch-Umschaltung über die Sidebar.

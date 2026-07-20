@@ -121,8 +121,8 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "scenario.model_total_return": "Modellhafte Gesamtrendite",
         "portfolio_sim.title": "Portfolio-Simulation",
         "portfolio_sim.caption": (
-            "Vergleicht Buy-and-Hold mit regelmäßigem Rebalancing. Gebühren und Dividenden werden als transparente "
-            "Näherung berücksichtigt; Steuern und historische Wechselkurse sind nicht enthalten."
+            "Bietet eine historische Transaktionssimulation mit Cash, Dividenden und FX sowie ein separates "
+            "Gewichtungsmodell für Buy-and-Hold und Rebalancing."
         ),
         "portfolio_sim.no_holdings": (
             "Für die Simulation werden Bestände aus data/transactions.csv oder portfolio.csv benötigt."
@@ -149,6 +149,61 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "portfolio_sim.note": (
             "Modellierte Handelskosten Rebalancing: {costs}. Dividenden werden gleichmäßig über Handelstage verteilt; "
             "reale Zahlungstermine weichen ab."
+        ),
+        "portfolio_sim.mode": "Simulationsmodus",
+        "portfolio_sim.mode_ledger": "Transaktionsbuch 2.0",
+        "portfolio_sim.mode_weights": "Gewichtungsmodell",
+        "portfolio_sim.weight_model": "Modell aus heutigen Gewichten",
+        "portfolio_sim.weight_model_caption": (
+            "Vergleicht Buy-and-Hold und Rebalancing anhand der heutigen Portfolio-Gewichte."
+        ),
+        "portfolio_sim.ledger_model": "Historische Transaktionssimulation",
+        "portfolio_sim.ledger_caption": (
+            "Verarbeitet Käufe, Verkäufe, Ein- und Auszahlungen, Gebühren, Splits sowie tatsächliche "
+            "Dividendendaten. Historische Wechselkurse werden über den konfigurierten FX-Provider geladen."
+        ),
+        "portfolio_sim.download_template": "Erweiterte Transaktionsvorlage herunterladen",
+        "portfolio_sim.ledger_not_configured": "Transaktionspfad oder Datenprovider sind nicht konfiguriert.",
+        "portfolio_sim.empty_ledger": "Das Transaktionsbuch ist leer: {path}",
+        "portfolio_sim.transaction_preview": "Transaktionsbuch prüfen",
+        "portfolio_sim.transaction_types": (
+            "Unterstützte Typen: BUY, SELL, DEPOSIT, WITHDRAWAL, DIVIDEND, FEE und SPLIT. "
+            "Für Geldbewegungen kann cash_amount verwendet werden."
+        ),
+        "portfolio_sim.initial_cash": "Anfangsbestand Cash",
+        "portfolio_sim.auto_fund": "Käufe automatisch finanzieren",
+        "portfolio_sim.auto_fund_help": (
+            "Ist nicht genug Cash vorhanden, wird die Differenz als externe Einzahlung verbucht. "
+            "So bleiben ältere Transaktionsdateien ohne DEPOSIT-Zeilen nutzbar."
+        ),
+        "portfolio_sim.actual_dividends": "Historische Dividenden laden",
+        "portfolio_sim.reinvest_dividends": "Dividenden reinvestieren",
+        "portfolio_sim.dividend_tax": "Modellsteuer auf Dividenden (%)",
+        "portfolio_sim.extra_costs": "Zusätzliche Handelskosten (Basispunkte)",
+        "portfolio_sim.benchmark": "Benchmark",
+        "portfolio_sim.benchmark_none": "Keine Benchmark",
+        "portfolio_sim.custom_benchmark": "Eigener Benchmark-Ticker (optional)",
+        "portfolio_sim.run_ledger": "Transaktionssimulation starten",
+        "portfolio_sim.loading_ledger": "Lade Historien, Dividenden und Wechselkurse …",
+        "portfolio_sim.simulation_error": "Simulation fehlgeschlagen: {error}",
+        "portfolio_sim.run_prompt": "Starte die Simulation, um Depotkurve und Kennzahlen zu berechnen.",
+        "portfolio_sim.final_value": "Endwert",
+        "portfolio_sim.net_contributions": "Nettoeinzahlungen",
+        "portfolio_sim.twr": "Zeitgewichtete Rendite (TWR)",
+        "portfolio_sim.mwr": "Geldgewichtete Rendite (XIRR)",
+        "portfolio_sim.final_cash": "Cash am Ende",
+        "portfolio_sim.total_fees": "Gebühren",
+        "portfolio_sim.taxes": "Modellsteuern",
+        "portfolio_sim.actual_portfolio": "Transaktionsdepot",
+        "portfolio_sim.cash": "Cash",
+        "portfolio_sim.benchmark_summary": (
+            "Benchmark {ticker}: Endwert {value} · geldgewichtete Rendite {mwr}"
+        ),
+        "portfolio_sim.warnings": "Prüfhinweise",
+        "portfolio_sim.final_positions": "Endbestände",
+        "portfolio_sim.ledger_note": (
+            "Die Simulation ist eine Recherchehilfe. Steuerregeln, Brokerabrechnungen, Quellensteuer, "
+            "Kapitalmaßnahmen und historische Daten können abweichen und müssen vor Entscheidungen geprüft werden."
         ),
         "sources.title": "Datenquellen & Provider-Monitor",
         "sources.caption": (
@@ -311,8 +366,8 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "scenario.model_total_return": "Modelled total return",
         "portfolio_sim.title": "Portfolio simulation",
         "portfolio_sim.caption": (
-            "Compares buy-and-hold with regular rebalancing. Fees and dividends are included as transparent "
-            "approximations; taxes and historical exchange rates are not included."
+            "Provides a historical transaction simulation with cash, dividends and FX plus a separate "
+            "weight model for buy-and-hold and rebalancing."
         ),
         "portfolio_sim.no_holdings": (
             "The simulation requires holdings from data/transactions.csv or portfolio.csv."
@@ -339,6 +394,61 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "portfolio_sim.note": (
             "Modelled rebalancing costs: {costs}. Dividends are spread evenly across trading days; "
             "actual payment dates differ."
+        ),
+        "portfolio_sim.mode": "Simulation mode",
+        "portfolio_sim.mode_ledger": "Transaction ledger 2.0",
+        "portfolio_sim.mode_weights": "Weight model",
+        "portfolio_sim.weight_model": "Model based on current weights",
+        "portfolio_sim.weight_model_caption": (
+            "Compares buy-and-hold and rebalancing using the portfolio's current weights."
+        ),
+        "portfolio_sim.ledger_model": "Historical transaction simulation",
+        "portfolio_sim.ledger_caption": (
+            "Processes buys, sells, deposits, withdrawals, fees, splits and actual dividend history. "
+            "Historical FX rates are loaded through the configured FX provider."
+        ),
+        "portfolio_sim.download_template": "Download extended transaction template",
+        "portfolio_sim.ledger_not_configured": "Transaction path or data providers are not configured.",
+        "portfolio_sim.empty_ledger": "The transaction ledger is empty: {path}",
+        "portfolio_sim.transaction_preview": "Review transaction ledger",
+        "portfolio_sim.transaction_types": (
+            "Supported types: BUY, SELL, DEPOSIT, WITHDRAWAL, DIVIDEND, FEE and SPLIT. "
+            "Use cash_amount for cash movements."
+        ),
+        "portfolio_sim.initial_cash": "Initial cash balance",
+        "portfolio_sim.auto_fund": "Automatically fund purchases",
+        "portfolio_sim.auto_fund_help": (
+            "If available cash is insufficient, the difference is recorded as an external contribution. "
+            "This keeps older ledgers without DEPOSIT rows usable."
+        ),
+        "portfolio_sim.actual_dividends": "Load historical dividends",
+        "portfolio_sim.reinvest_dividends": "Reinvest dividends",
+        "portfolio_sim.dividend_tax": "Modelled dividend tax (%)",
+        "portfolio_sim.extra_costs": "Additional trading costs (basis points)",
+        "portfolio_sim.benchmark": "Benchmark",
+        "portfolio_sim.benchmark_none": "No benchmark",
+        "portfolio_sim.custom_benchmark": "Custom benchmark ticker (optional)",
+        "portfolio_sim.run_ledger": "Run transaction simulation",
+        "portfolio_sim.loading_ledger": "Loading histories, dividends and FX rates …",
+        "portfolio_sim.simulation_error": "Simulation failed: {error}",
+        "portfolio_sim.run_prompt": "Run the simulation to calculate the equity curve and metrics.",
+        "portfolio_sim.final_value": "Final value",
+        "portfolio_sim.net_contributions": "Net contributions",
+        "portfolio_sim.twr": "Time-weighted return (TWR)",
+        "portfolio_sim.mwr": "Money-weighted return (XIRR)",
+        "portfolio_sim.final_cash": "Final cash",
+        "portfolio_sim.total_fees": "Fees",
+        "portfolio_sim.taxes": "Modelled taxes",
+        "portfolio_sim.actual_portfolio": "Transaction portfolio",
+        "portfolio_sim.cash": "Cash",
+        "portfolio_sim.benchmark_summary": (
+            "Benchmark {ticker}: final value {value} · money-weighted return {mwr}"
+        ),
+        "portfolio_sim.warnings": "Review notes",
+        "portfolio_sim.final_positions": "Final positions",
+        "portfolio_sim.ledger_note": (
+            "The simulation is a research aid. Tax rules, broker statements, withholding tax, corporate actions "
+            "and historical data may differ and must be verified before decisions."
         ),
         "sources.title": "Data Sources & Provider Monitor",
         "sources.caption": (
