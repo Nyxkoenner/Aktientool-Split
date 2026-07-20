@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.0.0
+
+- Neuer modularer Einstiegspunkt `stock_explorer.app_runtime` statt Start aus `legacy_app.py`.
+- Sidebar für Index, Sektor, Suche und Scanner-Profile in ein eigenes UI-Modul ausgelagert.
+- Expliziter, testbarer Seiten-Router ersetzt die lange zentrale `if/elif`-Kette.
+- Session-State und Refresh-Entscheidung des geladenen Aktienuniversums in einem Service gekapselt.
+- Gemeinsame Zahlen-, Ticker-, Datums- und DataFrame-Helfer in `domain/value_utils.py` ausgelagert.
+- Unternehmensauswahl als wiederverwendbares UI-Element extrahiert.
+- Acht doppelte ältere News-/Event-Funktionsdefinitionen aus der Kompatibilitätsschicht entfernt.
+- Qualitätsprüfung auf das gesamte Paket und den neuen Einstiegspunkt erweitert.
+- Zusätzliche Architektur-, Router-, Session- und Utility-Tests.
+
 ## 6.8.0
 
 - News- und Ereigniscluster mit quellenübergreifender Deduplizierung.

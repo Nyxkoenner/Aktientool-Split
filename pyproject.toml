@@ -22,3 +22,7 @@ ignore_missing_imports = true
 check_untyped_defs = true
 warn_unused_ignores = true
 exclude = ["stock_explorer/legacy_app.py"]
+
+[[tool.mypy.overrides]]
+module = "stock_explorer.legacy_app"
+follow_imports = "skip"

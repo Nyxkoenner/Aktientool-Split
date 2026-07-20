@@ -1,8 +1,27 @@
-# Aktien Explorer V6.8
+# Aktien Explorer V7.0
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
 weiterhin verfügbar.
+
+## Architektur-Release V7.0
+
+V7.0 trennt den Streamlit-Anwendungsablauf von der historischen
+Kompatibilitätsschicht. `app.py` startet jetzt `stock_explorer.app_runtime`;
+Sidebar, Seitenrouting, Session-State des Aktienuniversums und gemeinsame
+Datenhelfer liegen in eigenständigen, getesteten Modulen.
+
+Wichtige neue Grenzen:
+
+- `stock_explorer/app_runtime.py`: Start, Datenladen, Scoring und Seitenaufruf
+- `stock_explorer/ui/sidebar.py`: Index-, Filter- und Scanner-Steuerung
+- `stock_explorer/ui/page_router.py`: explizite Seitenregistrierung
+- `stock_explorer/services/universe_session.py`: zentraler Session-State
+- `stock_explorer/domain/value_utils.py`: wiederverwendbare Datenhelfer
+- `stock_explorer/legacy_app.py`: nur noch Kompatibilität für ältere Fachseiten
+
+Doppelte ältere News-/Event-Funktionsdefinitionen wurden entfernt. Neue
+Anwendungslogik soll nicht mehr in `legacy_app.py` ergänzt werden.
 
 ## Installation
 
@@ -79,7 +98,7 @@ templates/transactions_v2_template.csv
 .\scripts\check.ps1
 ```
 
-Der Prüflauf umfasst 57 Tests sowie Ruff, Mypy und Syntaxprüfung.
+Der Prüflauf umfasst die automatisierten Tests sowie Ruff, Mypy und Syntaxprüfung.
 
 ## Szenario-Engine 2.0
 

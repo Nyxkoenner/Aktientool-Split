@@ -11,6 +11,7 @@ from .event_database import EventDatabase, EventDatabaseSnapshot
 from .news_intelligence_service import NewsIntelligenceBundle, NewsIntelligenceService
 from .report_service import CompanyReportService, ReportAnalysisBundle
 from .scenario_service import ScenarioAnalysis, analyze_scenario, snapshot_from_row
+from .universe_session import UniverseSessionStore, UniverseSnapshot
 
 __all__ = [
     "CompanyReportService",
@@ -27,4 +28,6 @@ __all__ = [
     "WalkForwardConfig",
     "run_ai_lab",
     "save_ai_lab_run",
+    "UniverseSessionStore",
+    "UniverseSnapshot",
 ]

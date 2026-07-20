@@ -36,6 +36,16 @@ from .strategy_backtest import (
     baseline_positions,
     simulate_positions,
 )
+from .value_utils import (
+    clean_ticker,
+    display_text,
+    ensure_datetime_index,
+    format_eur,
+    format_number,
+    format_percent,
+    safe_float,
+    to_percent,
+)
 
 __all__ = [
     "CompanyScenarioSnapshot",
@@ -72,4 +82,12 @@ __all__ = [
     "extract_close_series",
     "simulate_positions",
     "train_q_learning",
+    "clean_ticker",
+    "display_text",
+    "ensure_datetime_index",
+    "format_eur",
+    "format_number",
+    "format_percent",
+    "safe_float",
+    "to_percent",
 ]
