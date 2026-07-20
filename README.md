@@ -1,89 +1,92 @@
-# Aktien Explorer V6.0.1
+# Aktien Explorer V6.2
 
-V6.0.1 ist die korrigierte modulare Grundlage des bisherigen Streamlit-Tools.
+V6.2 setzt die modulare Umstellung fort. Markt-, Index-, FX-, News-, Event-,
+SEC- und Profilquellen sind jetzt über klar getrennte Provider und Services
+angebunden. Die bestehende Streamlit-Oberfläche bleibt dabei erhalten.
 
-## Unterstützte Python-Version
-
-Dieses Projekt ist auf **Python 3.13** abgestimmt. Prüfe deine aktive Umgebung mit:
-
-```powershell
-python --version
-python -c "import sys; print(sys.executable)"
-```
-
-Beide Befehle sollten auf die `.venv` des Projektordners zeigen.
-
-## Start
+## Installation
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+.\scripts\check.ps1
 python -m streamlit run app.py
 ```
 
-## Architektur
+## Neue Struktur
 
-- `app.py`: stabiler Streamlit-Einstiegspunkt
-- `stock_explorer/legacy_app.py`: bestehende vollständige Benutzeroberfläche
-- `stock_explorer/providers/`: austauschbare Marktdatenanbieter
-- `stock_explorer/domain/`: neue, UI-unabhängige Logik
-- `stock_explorer/i18n/`: zentrale Übersetzungen
-- `tests/`: schnelle Logik- und Vertragstests
+```text
+stock_explorer/
+├── providers/
+│   ├── base.py
+│   ├── company_profiles.py
+│   ├── events.py
+│   ├── fx.py
+│   ├── http.py
+│   ├── indexes.py
+│   ├── models.py
+│   ├── news.py
+│   ├── registry.py
+│   ├── sec.py
+│   └── yahoo.py
+├── services/
+│   ├── event_service.py
+│   ├── index_service.py
+│   ├── news_service.py
+│   └── profile_service.py
+├── domain/
+├── ui/
+└── legacy_app.py
+```
 
-Der Umbau folgt dem Strangler-Pattern: Das funktionierende Tool bleibt erhalten,
-während Datenzugriffe und Fachlogik schrittweise aus der alten Datei herausgezogen werden.
+## Was bereits über Provider läuft
 
-## Datenanbieter wechseln
+- Marktdaten und Dividenden: Yahoo-Market-Provider
+- Wechselkurse: eigenständiger FX-Provider
+- Indexbestandteile: CSV-/Offline-/S&P-Provider
+- RSS- und Google-News-Transport: News-Provider
+- SEC-Unternehmensmapping und Filings: SEC-Provider
+- Yahoo-Kalender und manuelle Termine: Event-Provider
+- Ownership-, Analysten- und Governance-Daten: Profil-Provider
 
-Aktuell ist Yahoo implementiert. Die Auswahl läuft über:
+Die Firmenzuordnung, Sentimentlogik und Ereignisklassifikation bleiben vorerst
+in der Fachlogik der Bestands-App. In V6.3 werden auch diese Bestandteile weiter
+aus `legacy_app.py` herausgezogen.
+
+## Anbieter konfigurieren
 
 ```powershell
 $env:AKTIEN_EXPLORER_MARKET_PROVIDER="yahoo"
+$env:AKTIEN_EXPLORER_FX_PROVIDER="yahoo"
+$env:AKTIEN_EXPLORER_PROFILE_PROVIDER="yahoo"
+$env:AKTIEN_EXPLORER_SEC_PROVIDER="sec_edgar"
+$env:SEC_CONTACT_EMAIL="deine-email@example.com"
 ```
 
-Weitere Anbieter implementieren `MarketDataProvider` und werden in
-`stock_explorer/providers/registry.py` registriert.
-
 ## Qualitätssicherung
-
-Komplettlauf:
 
 ```powershell
 .\scripts\check.ps1
 ```
 
-Einzelschritte:
+Der Prüflauf umfasst Pytest, Ruff, Mypy und die Syntaxprüfung der bestehenden
+Streamlit-App. In V6.2 sind zwölf Kern- und Provider-Tests enthalten.
+
+## Git
 
 ```powershell
-python -m pytest
-python -m ruff format --check stock_explorer tests
-python -m ruff check stock_explorer tests
-python -m mypy stock_explorer/providers stock_explorer/domain
-python -m py_compile app.py stock_explorer/legacy_app.py
-```
-
-### Warum `legacy_app.py` noch nicht vollständig gelintet wird
-
-Die große Bestandsdatei wird in dieser Übergangsphase weiterhin ausgeführt und per
-`py_compile` auf Syntaxfehler geprüft. Ruff und Mypy prüfen bereits die neuen Module.
-Die Bestandsdatei wird in den folgenden V6-Releases schrittweise aufgeteilt und dann
-abschnittsweise in die strengeren Prüfungen aufgenommen. So bleibt die laufende App
-stabil, ohne technische Altlasten zu verschweigen.
-
-## Git-Start
-
-```powershell
-git init
 git add .
-git commit -m "V6.0.1 modular foundation and checks"
-git tag v6.0.1
+git commit -m "V6.2 modulare Datenprovider und Services"
+git push
+git tag -a v6.2.0 -m "Modulare News-, Event-, Index-, FX-, SEC- und Profilprovider"
+git push origin v6.2.0
 ```
 
-## Nächste Releases
+## Nächste Schritte
 
-- V6.1: Szenario-Engine und Portfolio-Simulation in die Oberfläche integrieren
-- V6.2: News-/Event-Provider und automatische Unternehmensprofile modularisieren
-- V6.3: vollständiges i18n-System
-- V6.4: KI-/RL-Labor mit Baselines und Walk-forward-Tests
+- V6.3: News-/Event-Fachlogik und Profilautomatisierung weiter auslagern
+- V6.4: vollständige Sprachumschaltung
+- V6.5: Portfolio-Simulation 2.0
+- V6.6: KI-/RL-Labor

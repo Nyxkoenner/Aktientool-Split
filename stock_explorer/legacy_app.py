@@ -38,17 +38,30 @@ import yfinance as yf
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 from dateutil import parser as dateparser
 
-from stock_explorer.providers.registry import get_market_provider
+from stock_explorer.providers.events import SecFilingEventProvider
+from stock_explorer.providers.registry import (
+    get_event_service,
+    get_fx_provider,
+    get_index_service,
+    get_market_provider,
+    get_news_service,
+    get_profile_service,
+    get_sec_provider,
+)
 from stock_explorer.ui import render_portfolio_simulation, render_scenario_engine
 
 MARKET_PROVIDER = get_market_provider()
+FX_PROVIDER = get_fx_provider()
+PROFILE_SERVICE = get_profile_service()
+SEC_PROVIDER = get_sec_provider()
+SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 
 
 # -----------------------------------------------------------------------------
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.1.0"
+APP_VERSION = "6.2.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -460,6 +473,15 @@ BENCHMARK_BY_INDEX = {
 # Beispiel: Airbus ist im DAX, wird bei Yahoo aber zuverlässig als AIR.PA geführt.
 # V3.8 hat solche Werte versehentlich herausgefiltert und dadurch beim DAX nur 39 Titel geladen.
 GERMAN_INDEX_ALLOWED_SUFFIXES = (".DE", ".F", ".PA")
+
+INDEX_SERVICE = get_index_service(
+    local_paths=INDEX_LOCAL_FILES,
+    static_constituents=STATIC_INDEX_CONSTITUENTS,
+    expected_counts=INDEX_EXPECTED_COUNTS,
+    cache_dir=CACHE_DIR,
+    static_as_of=INDEX_STATIC_AS_OF,
+    headers=DEFAULT_HEADERS,
+)
 
 
 # -----------------------------------------------------------------------------
@@ -1017,61 +1039,14 @@ def _valid_local_index(index_name: str) -> Optional[pd.DataFrame]:
 
 
 def index_source_description(index_name: str) -> str:
-    """Kurze, nutzerfreundliche Beschreibung der verwendeten Indexquelle."""
-    if _valid_local_index(index_name) is not None:
-        return f"Lokale CSV: {INDEX_LOCAL_FILES[index_name]}"
-    if index_name in STATIC_INDEX_CONSTITUENTS:
-        return f"Integrierte Offline-Liste · Stand {INDEX_STATIC_AS_OF}"
-    return "Online-Quelle mit lokalem Cache"
+    """Beschreibung der über den modularen Index-Service verwendeten Quelle."""
+    return INDEX_SERVICE.source_description(index_name)
 
 
 @st.cache_data(ttl=24 * 3600, show_spinner=False)
 def load_index_constituents(index_name: str) -> pd.DataFrame:
-    """Lädt Indizes robust, ohne deutsche Listen automatisch von Wikipedia abzurufen.
-
-    Reihenfolge:
-    1. valide lokale CSV unter data/indices/
-    2. integrierte Offline-Liste für DAX, MDAX und SDAX
-    3. S&P 500: lokaler Cache, danach Online-Fallback
-    """
-    local_frame = _valid_local_index(index_name)
-    if local_frame is not None:
-        return local_frame
-
-    if index_name in STATIC_INDEX_CONSTITUENTS:
-        frame = validate_constituents(pd.DataFrame(STATIC_INDEX_CONSTITUENTS[index_name]))
-        expected = INDEX_EXPECTED_COUNTS[index_name]
-        if len(frame) != expected:
-            raise RuntimeError(
-                f"Interne {index_name}-Liste ist unvollständig: {len(frame)} statt {expected} Werte."
-            )
-        return frame.reset_index(drop=True)
-
-    if index_name == "S&P 500":
-        cache_path = CACHE_DIR / "sp500_constituents.csv"
-        if cache_path.exists():
-            try:
-                cached = validate_constituents(pd.read_csv(cache_path))
-                if len(cached) >= 400:
-                    return cached.reset_index(drop=True)
-            except Exception:
-                pass
-
-        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-        try:
-            frame = parse_sp500_tables(read_html_tables(fetch_html(url)))
-            try:
-                frame.to_csv(cache_path, index=False)
-            except Exception:
-                pass
-            return frame.reset_index(drop=True)
-        except Exception as error:
-            raise RuntimeError(
-                "S&P 500 konnte online nicht geladen werden und es liegt noch kein lokaler Cache vor. "
-                "Lege alternativ data/indices/sp500.csv an."
-            ) from error
-
-    raise ValueError(f"Unbekannter Index: {index_name}")
+    """Lädt Indexbestandteile über die austauschbare Provider-Schnittstelle."""
+    return INDEX_SERVICE.load(index_name)
 
 
 def benchmark_for_index(index_name: str) -> str:
@@ -2305,7 +2280,7 @@ def currency_unit_multiplier(currency: Any) -> float:
 def fx_to_eur(currency: str) -> Optional[float]:
     """Umrechnung über den konfigurierten Marktdatenanbieter."""
     raw_currency = str(currency or "EUR").strip()
-    return MARKET_PROVIDER.fx_to_eur(raw_currency)
+    return FX_PROVIDER.to_eur(raw_currency)
 
 
 def read_portfolio() -> pd.DataFrame:
@@ -2606,6 +2581,11 @@ NEWS_SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 IR_SOURCES_PATH = DATA_DIR / "ir_sources.csv"
 MANUAL_EVENTS_PATH = DATA_DIR / "manual_events.csv"
 SEC_TICKER_CACHE_PATH = CACHE_DIR / "sec_company_tickers.json"
+
+EVENT_SERVICE = get_event_service(
+    manual_events_path=MANUAL_EVENTS_PATH,
+    sec_provider=SEC_PROVIDER,
+)
 
 SEC_CONTACT_EMAIL = os.getenv("SEC_CONTACT_EMAIL", "contact@example.com")
 SEC_HEADERS = {
@@ -3118,103 +3098,102 @@ def fetch_news_bundle(
     locale: str = "de",
     max_items: int = 80,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Lädt News mit Quellenstatus und einem transparenten Firmenbezug-Score."""
+    """Lädt Rohmeldungen über austauschbare News-Provider.
+
+    Firmenzuordnung, Sentiment und Ereignisklassifikation bleiben bewusst in der
+    Fachlogik der App. Der Transport zu RSS-/Google-Quellen ist nun modular.
+    """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=int(days_back))).replace(tzinfo=None)
     ticker = clean_ticker(ticker)
-    source_specs = [dict(source) for source in GLOBAL_RSS_SOURCES]
-
+    google_query = None
     if include_google_news:
         preferred_alias = primary_news_query_alias(company_name, ticker)
-        query = f'"{preferred_alias}"'
-        source_specs.append(
+        google_query = f'"{preferred_alias}"'
+
+    service = get_news_service(
+        global_sources=GLOBAL_RSS_SOURCES,
+        headers=DEFAULT_HEADERS,
+        google_query=google_query,
+        locale=locale,
+    )
+    raw_news, diagnostics = service.fetch_raw()
+    if raw_news.empty:
+        return empty_news_frame(), diagnostics
+
+    news_rows: list[dict[str, Any]] = []
+    diagnostics = diagnostics.copy()
+    if "matches" not in diagnostics.columns:
+        diagnostics["matches"] = 0
+    if "uncertain_matches" not in diagnostics.columns:
+        diagnostics["uncertain_matches"] = 0
+
+    raw_news["published"] = pd.to_datetime(raw_news["published"], errors="coerce")
+    raw_news = raw_news.dropna(subset=["published"])
+    raw_news = raw_news[raw_news["published"] >= cutoff]
+
+    source_counts: dict[str, dict[str, int]] = {}
+    for _, entry in raw_news.iterrows():
+        title = str(entry.get("title", "") or "")
+        summary = str(entry.get("summary", "") or "")
+        source_name = str(entry.get("source", "") or "")
+        source_kind = str(entry.get("source_kind", "global") or "global")
+        relevance = evaluate_news_relevance(
+            title=title,
+            summary=summary,
+            company_name=company_name,
+            ticker=ticker,
+            source_kind=source_kind,
+        )
+        if int(relevance["relevance_score"]) < 35:
+            continue
+
+        counters = source_counts.setdefault(source_name, {"matches": 0, "uncertain_matches": 0})
+        if bool(relevance["is_relevant"]):
+            counters["matches"] += 1
+        else:
+            counters["uncertain_matches"] += 1
+
+        sentiment_result = analyze_sentiment(title, summary)
+        combined_text = f"{title} {summary}"
+        news_rows.append(
             {
-                "name": f"Google News Suche: {preferred_alias}",
-                "url": google_news_rss_url(query, locale),
-                "kind": "search_fallback",
+                "published": entry["published"],
+                "ticker_yahoo": ticker,
+                "title": title,
+                "link": str(entry.get("link", "") or ""),
+                "source": source_name,
+                "source_kind": source_kind,
+                "matched_alias": relevance["matched_alias"],
+                "sentiment_score": int(sentiment_result["score"]),
+                "sentiment_label": str(sentiment_result["label"]),
+                "sentiment_confidence": sentiment_result["confidence"],
+                "sentiment_reason": sentiment_result["reason"],
+                "event_type": (
+                    classify_event_from_text(combined_text)
+                    if bool(relevance["is_relevant"])
+                    else "news"
+                ),
+                "relevance_score": relevance["relevance_score"],
+                "relevance_label": relevance["relevance_label"],
+                "relevance_reason": relevance["relevance_reason"],
+                "is_relevant": relevance["is_relevant"],
             }
         )
 
-    news_rows: list[dict[str, Any]] = []
-    diagnostics: list[dict[str, Any]] = []
-
-    for source in source_specs:
-        payload, diagnostic = request_feed(source["url"])
-        diagnostic["source"] = source["name"]
-        diagnostic["kind"] = source["kind"]
-        diagnostic["uncertain_matches"] = 0
-
-        if payload is None:
-            diagnostics.append(diagnostic)
-            continue
-
-        parsed_entries, parser_error = parse_feed_entries(payload, source["name"], source["kind"])
-        diagnostic["entries"] = len(parsed_entries)
-        if parser_error:
-            diagnostic["status"] = "Parser-Fehler"
-            diagnostic["message"] = parser_error
-            diagnostics.append(diagnostic)
-            continue
-
-        for entry in parsed_entries:
-            if not entry["title"] or entry["published"] < cutoff:
-                continue
-
-            relevance = evaluate_news_relevance(
-                title=entry["title"],
-                summary=entry["summary"],
-                company_name=company_name,
-                ticker=ticker,
-                source_kind=source["kind"],
+    for source_name, counters in source_counts.items():
+        mask = diagnostics.get("source", pd.Series(dtype=str)).astype(str).eq(source_name)
+        diagnostics.loc[mask, "matches"] = counters["matches"]
+        diagnostics.loc[mask, "uncertain_matches"] = counters["uncertain_matches"]
+        if counters["matches"] == 0 and counters["uncertain_matches"] > 0:
+            diagnostics.loc[mask, "status"] = "Nur unsichere Treffer"
+            diagnostics.loc[mask, "message"] = (
+                "Treffer mit schwachem Firmenbezug werden standardmäßig ausgeblendet."
             )
-            # Treffer ohne sichtbaren Firmenbezug werden nicht einmal als
-            # unsicher gespeichert; so bleibt die Oberfläche sauber.
-            if int(relevance["relevance_score"]) < 35:
-                continue
-
-            if bool(relevance["is_relevant"]):
-                diagnostic["matches"] += 1
-            else:
-                diagnostic["uncertain_matches"] += 1
-
-            combined_text = f"{entry['title']} {entry['summary']}"
-            sentiment_result = analyze_sentiment(entry["title"], entry["summary"])
-            sentiment_score = int(sentiment_result["score"])
-            sentiment_label = str(sentiment_result["label"])
-            event_type = classify_event_from_text(combined_text) if bool(relevance["is_relevant"]) else "news"
-            news_rows.append(
-                {
-                    "published": entry["published"],
-                    "ticker_yahoo": ticker,
-                    "title": entry["title"],
-                    "link": entry["link"],
-                    "source": entry["source"],
-                    "source_kind": entry["source_kind"],
-                    "matched_alias": relevance["matched_alias"],
-                    "sentiment_score": sentiment_score,
-                    "sentiment_label": sentiment_label,
-                    "sentiment_confidence": sentiment_result["confidence"],
-                    "sentiment_reason": sentiment_result["reason"],
-                    "event_type": event_type,
-                    "relevance_score": relevance["relevance_score"],
-                    "relevance_label": relevance["relevance_label"],
-                    "relevance_reason": relevance["relevance_reason"],
-                    "is_relevant": relevance["is_relevant"],
-                }
-            )
-
-        if diagnostic["status"] == "OK" and diagnostic["entries"] == 0:
-            diagnostic["status"] = "Keine Einträge"
-        elif diagnostic["status"] == "OK" and diagnostic["matches"] == 0 and diagnostic["uncertain_matches"] > 0:
-            diagnostic["status"] = "Nur unsichere Treffer"
-            diagnostic["message"] = "Treffer mit schwachem Firmenbezug werden standardmäßig ausgeblendet."
-        elif diagnostic["status"] == "OK" and diagnostic["matches"] == 0:
-            diagnostic["status"] = "Keine Firmen-Treffer"
-        diagnostics.append(diagnostic)
+        elif counters["matches"] == 0:
+            diagnostics.loc[mask, "status"] = "Keine Firmen-Treffer"
 
     news = pd.DataFrame(news_rows) if news_rows else empty_news_frame()
     if not news.empty:
-        # Gleiche Überschriften aus mehreren Quellen werden einmal behalten –
-        # bevorzugt mit höherer Relevanz und neuerem Datum.
         news["_dedupe_key"] = news["title"].map(normalize_for_search)
         news = (
             news.sort_values(["relevance_score", "published"], ascending=[False, False])
@@ -3224,9 +3203,7 @@ def fetch_news_bundle(
             .head(max_items)
             .reset_index(drop=True)
         )
-
-    diagnostic_frame = pd.DataFrame(diagnostics)
-    return news, diagnostic_frame
+    return news, diagnostics.reset_index(drop=True)
 
 
 @st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
@@ -9474,26 +9451,8 @@ def classify_event_from_text_v55(text: str) -> str:
 
 @st.cache_data(ttl=24 * 60 * 60, show_spinner=False)
 def fetch_sec_company_map() -> tuple[dict[str, dict[str, Any]], str]:
-    url = "https://www.sec.gov/files/company_tickers.json"
-    try:
-        response = requests.get(url, headers=SEC_HEADERS, timeout=25)
-        response.raise_for_status()
-        payload = response.json()
-        mapping: dict[str, dict[str, Any]] = {}
-        iterable = payload.values() if isinstance(payload, dict) else payload
-        for item in iterable:
-            if not isinstance(item, dict):
-                continue
-            ticker_value = clean_ticker(item.get("ticker"))
-            cik = item.get("cik_str")
-            if ticker_value and cik is not None:
-                mapping[ticker_value] = {
-                    "cik": int(cik),
-                    "title": str(item.get("title", "")),
-                }
-        return mapping, ""
-    except Exception as error:
-        return {}, f"{type(error).__name__}: {error}"
+    """Kompatibilitäts-Wrapper um den modularen SEC-Provider."""
+    return SEC_PROVIDER.company_map()
 
 
 def _sec_form_meta(form: str) -> Optional[tuple[str, str, str]]:
@@ -9515,106 +9474,14 @@ def fetch_sec_filings_events(
     company_name: str,
     days_back: int = 730,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    ticker_clean = clean_ticker(ticker)
-    diagnostic = {
-        "source": "SEC EDGAR",
-        "kind": "official_regulator",
-        "status": "Nicht verfügbar",
-        "http_status": None,
-        "entries": 0,
-        "matches": 0,
-        "uncertain_matches": 0,
-        "duration_ms": None,
-        "message": "",
-        "url": "https://data.sec.gov/",
-    }
-    # Börsensuffixe wie .DE/.PA sind nicht direkt SEC-gemappt. US-ADRs ohne
-    # Suffix können dagegen vorhanden sein.
-    if "." in ticker_clean:
-        diagnostic["message"] = "SEC-Quelle wird nur für SEC-gemappte US-Ticker/ADRs verwendet."
-        return empty_events_frame(), pd.DataFrame([diagnostic])
-
-    started = time.perf_counter()
-    company_map, map_error = fetch_sec_company_map()
-    if map_error:
-        diagnostic["status"] = "Fehler"
-        diagnostic["message"] = map_error
-        diagnostic["duration_ms"] = round((time.perf_counter() - started) * 1000)
-        return empty_events_frame(), pd.DataFrame([diagnostic])
-    match = company_map.get(ticker_clean)
-    if not match:
-        diagnostic["message"] = f"Kein SEC-CIK für {ticker_clean} gefunden."
-        diagnostic["duration_ms"] = round((time.perf_counter() - started) * 1000)
-        return empty_events_frame(), pd.DataFrame([diagnostic])
-
-    cik = int(match["cik"])
-    url = f"https://data.sec.gov/submissions/CIK{cik:010d}.json"
-    diagnostic["url"] = url
-    try:
-        response = requests.get(url, headers=SEC_HEADERS, timeout=25)
-        diagnostic["http_status"] = response.status_code
-        response.raise_for_status()
-        payload = response.json()
-        recent = payload.get("filings", {}).get("recent", {})
-        forms = list(recent.get("form", []))
-        dates = list(recent.get("filingDate", []))
-        accessions = list(recent.get("accessionNumber", []))
-        docs = list(recent.get("primaryDocument", []))
-        descriptions = list(recent.get("primaryDocDescription", []))
-        diagnostic["entries"] = len(forms)
-        cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=int(days_back))
-        rows: list[dict[str, Any]] = []
-        for position, form in enumerate(forms):
-            filing_date = dates[position] if position < len(dates) else None
-            accession = accessions[position] if position < len(accessions) else ""
-            document = docs[position] if position < len(docs) else ""
-            description = descriptions[position] if position < len(descriptions) else ""
-            meta = _sec_form_meta(str(form))
-            if meta is None:
-                continue
-            parsed_date = pd.to_datetime(filing_date, errors="coerce")
-            if pd.isna(parsed_date) or pd.Timestamp(parsed_date).normalize() < cutoff:
-                continue
-            event_type, base_title, importance = meta
-            accession_compact = str(accession).replace("-", "")
-            filing_link = (
-                f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_compact}/{document}"
-                if accession_compact and document else url
-            )
-            detail = str(description or "").strip()
-            title = base_title if not detail else f"{base_title}: {detail}"
-            rows.append({
-                "date": pd.Timestamp(parsed_date).tz_localize(None),
-                "ticker_yahoo": ticker_clean,
-                "event_type": event_type,
-                "title": title,
-                "source": "SEC EDGAR",
-                "link": filing_link,
-                "sentiment_score": 0.0,
-                "sentiment_label": "neutral",
-                "sentiment_confidence": "niedrig",
-                "sentiment_reason": "Offizielles Filing – keine automatische inhaltliche Bewertung",
-                "importance": importance,
-                "is_future_event": False,
-                "verification_level": "official",
-                "verification_score": 100,
-                "event_status": "bestätigt",
-                "source_type": "regulator",
-                "source_url": url,
-                "retrieved_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "notes": f"SEC-CIK {cik:010d} · {company_name}",
-                "conflict_note": "",
-            })
-        events = normalize_events_frame(pd.DataFrame(rows))
-        diagnostic["matches"] = len(events)
-        diagnostic["status"] = "OK" if not events.empty else "Keine relevanten Filings"
-        diagnostic["duration_ms"] = round((time.perf_counter() - started) * 1000)
-        return events, pd.DataFrame([diagnostic])
-    except Exception as error:
-        diagnostic["status"] = "Fehler"
-        diagnostic["message"] = f"{type(error).__name__}: {error}"
-        diagnostic["duration_ms"] = round((time.perf_counter() - started) * 1000)
-        return empty_events_frame(), pd.DataFrame([diagnostic])
+    """Kompatibilitäts-Wrapper um den modularen SEC-Event-Provider."""
+    result = SEC_EVENT_PROVIDER.fetch(
+        ticker,
+        company_name,
+        days_back=days_back,
+        days_forward=0,
+    )
+    return normalize_events_frame(result.events), result.diagnostics
 
 
 def _ir_feed_to_events(
@@ -9982,23 +9849,26 @@ def fetch_verified_event_bundle(
     days_back: int,
     days_forward: int = 730,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    sec_events, sec_diagnostics = fetch_sec_filings_events(ticker, company_name, days_back=max(days_back, 730))
-    ir_events, ir_diagnostics = fetch_registered_ir_events(ticker, days_back=max(days_back, 730), days_forward=days_forward)
-    manual_events = read_manual_events(ticker)
-    manual_diagnostic = pd.DataFrame([{
-        "source": "Manuell bestätigte Termine",
-        "kind": "manual",
-        "status": "Lokal",
-        "http_status": None,
-        "entries": len(manual_events),
-        "matches": len(manual_events),
-        "uncertain_matches": 0,
-        "duration_ms": 0,
-        "message": "Termine aus data/manual_events.csv",
-        "url": str(MANUAL_EVENTS_PATH),
-    }])
-    events = normalize_events_frame(pd.concat([sec_events, ir_events, manual_events], ignore_index=True))
-    diagnostics = pd.concat([sec_diagnostics, ir_diagnostics, manual_diagnostic], ignore_index=True)
+    provider_events, provider_diagnostics = EVENT_SERVICE.fetch(
+        ticker,
+        company_name,
+        days_back=max(days_back, 730),
+        days_forward=days_forward,
+    )
+    # Registrierte Unternehmens-IR-Feeds bleiben vorerst als Legacy-Adapter
+    # erhalten und werden in V6.3 als eigener Provider ausgelagert.
+    ir_events, ir_diagnostics = fetch_registered_ir_events(
+        ticker,
+        days_back=max(days_back, 730),
+        days_forward=days_forward,
+    )
+    events = normalize_events_frame(
+        pd.concat([provider_events, ir_events], ignore_index=True)
+    )
+    diagnostics = pd.concat(
+        [provider_diagnostics, ir_diagnostics],
+        ignore_index=True,
+    )
     return events, diagnostics
 
 
@@ -10948,54 +10818,8 @@ def _safe_yf_dict(ticker_object: Any, method_name: str, attribute_name: str) -> 
 
 @st.cache_data(ttl=12 * 60 * 60, show_spinner=False)
 def fetch_company_profile_enrichment(ticker: str) -> dict[str, Any]:
-    """Lädt Ownership-, Analysten- und Governance-Daten, soweit Yahoo sie anbietet."""
-    symbol = clean_ticker(ticker)
-    result: dict[str, Any] = {
-        "major_holders": pd.DataFrame(),
-        "institutional_holders": pd.DataFrame(),
-        "mutualfund_holders": pd.DataFrame(),
-        "insider_roster": pd.DataFrame(),
-        "insider_transactions": pd.DataFrame(),
-        "insider_purchases": pd.DataFrame(),
-        "recommendations": pd.DataFrame(),
-        "upgrades_downgrades": pd.DataFrame(),
-        "revenue_estimate": pd.DataFrame(),
-        "earnings_estimate": pd.DataFrame(),
-        "growth_estimates": pd.DataFrame(),
-        "sustainability": pd.DataFrame(),
-        "analyst_targets": {},
-        "errors": [],
-    }
-    if not symbol:
-        return result
-    try:
-        obj = yf.Ticker(symbol)
-    except Exception as error:
-        result["errors"].append(f"Ticker konnte nicht initialisiert werden: {error}")
-        return result
-
-    table_specs = [
-        ("major_holders", "get_major_holders", "major_holders"),
-        ("institutional_holders", "get_institutional_holders", "institutional_holders"),
-        ("mutualfund_holders", "get_mutualfund_holders", "mutualfund_holders"),
-        ("insider_roster", "get_insider_roster_holders", "insider_roster_holders"),
-        ("insider_transactions", "get_insider_transactions", "insider_transactions"),
-        ("insider_purchases", "get_insider_purchases", "insider_purchases"),
-        ("recommendations", "get_recommendations_summary", "recommendations_summary"),
-        ("upgrades_downgrades", "get_upgrades_downgrades", "upgrades_downgrades"),
-        ("revenue_estimate", "get_revenue_estimate", "revenue_estimate"),
-        ("earnings_estimate", "get_earnings_estimate", "earnings_estimate"),
-        ("growth_estimates", "get_growth_estimates", "growth_estimates"),
-        ("sustainability", "get_sustainability", "sustainability"),
-    ]
-    for key, method_name, attribute_name in table_specs:
-        try:
-            result[key] = _safe_yf_table(obj, method_name, attribute_name)
-        except Exception as error:
-            result["errors"].append(f"{key}: {error}")
-
-    result["analyst_targets"] = _safe_yf_dict(obj, "get_analyst_price_targets", "analyst_price_targets")
-    return result
+    """Lädt Profilanreicherung über die austauschbare Provider-Schnittstelle."""
+    return PROFILE_SERVICE.fetch_enrichment(clean_ticker(ticker))
 
 
 def _cagr(first: Any, last: Any, years: float) -> Optional[float]:

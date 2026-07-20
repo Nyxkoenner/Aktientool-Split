@@ -1,11 +1,23 @@
 # Changelog
 
-## V6.0.1
+## 6.2.0
 
-- Ruff-Zielversion auf Python 3.13 aktualisiert.
-- Mypy-Zielversion auf Python 3.13 aktualisiert; damit sind aktuelle NumPy-Stubs kompatibel.
-- Importreihenfolge und öffentliche Re-Exports bereinigt.
-- Typfehler in Yahoo-FX-Umrechnung, Provider-Registry und optionaler RL-Umgebung korrigiert.
-- `check.ps1` bricht nun zuverlässig beim ersten fehlgeschlagenen Prüfschritt ab.
-- Formatprüfung und Syntaxprüfung der großen Bestands-App ergänzt.
-- `legacy_app.py` bewusst als Übergangsdatei von Ruff/Mypy ausgenommen; Syntax wird weiter geprüft.
+- Austauschbare Provider für FX, Indizes, News, Events, SEC und Unternehmensprofile.
+- Neue Service-Schicht zur Orchestrierung mehrerer Quellen.
+- News-Transport von RSS und Google News aus der Bestands-App ausgelagert.
+- SEC-Filings und Yahoo-/manuelle Kalendertermine über Event-Provider angebunden.
+- Indexabruf über CSV-/Offline-/S&P-Provider.
+- Profilanreicherung über einen Yahoo-Profilprovider.
+- Zwölf Tests für Domain- und Providerlogik.
+- Qualitätsprüfung um `stock_explorer/services` erweitert.
+
+## 6.1.0
+
+- Szenario- und Prognose-Engine als eigenständiges UI-Modul eingebunden.
+- Transparente schwache, mittlere und starke Szenarien sowie benutzerdefinierte Annahmen.
+- Portfolio-Simulation mit Buy-and-Hold-Vergleich, regelmäßigem Rebalancing, Gebühren und Dividenden-Näherung.
+- Neue Tests für Szenariologik, Handelskosten und Dividendenerfassung.
+
+## 6.0.1
+
+- Python-3.13-, Ruff- und Mypy-Konfiguration korrigiert.

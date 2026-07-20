@@ -19,7 +19,7 @@ function Invoke-PythonModule {
 Invoke-PythonModule pytest
 Invoke-PythonModule ruff format --check stock_explorer tests
 Invoke-PythonModule ruff check stock_explorer tests
-Invoke-PythonModule mypy stock_explorer/providers stock_explorer/domain
+Invoke-PythonModule mypy stock_explorer/providers stock_explorer/domain stock_explorer/services
 Invoke-PythonModule py_compile app.py stock_explorer/legacy_app.py
 
 Write-Host ""
