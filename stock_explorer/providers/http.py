@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 
 @dataclass(slots=True)
