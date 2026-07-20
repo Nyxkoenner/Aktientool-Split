@@ -1,5 +1,6 @@
 """Pure domain models and calculations."""
 
+from .ai_features import FeatureSet, build_feature_frame, extract_close_series
 from .market_reaction import compute_market_reactions
 from .news_intelligence import (
     ImpactAssessment,
@@ -12,6 +13,13 @@ from .news_intelligence import (
     source_health_summary,
 )
 from .report_analysis import ReportAnalysis, StructuredCandidate, TextFinding, analyze_report_text
+from .rl_qlearning import (
+    QLearningConfig,
+    QLearningEvaluation,
+    QLearningModel,
+    evaluate_q_learning,
+    train_q_learning,
+)
 from .scenario_calibration import HistoricalCalibration, calibrate_history
 from .scenario_models import (
     CompanyScenarioSnapshot,
@@ -21,6 +29,12 @@ from .scenario_models import (
     classify_sector,
     run_sector_scenario,
     sector_adjusted_preset,
+)
+from .strategy_backtest import (
+    StrategyMetrics,
+    StrategyResult,
+    baseline_positions,
+    simulate_positions,
 )
 
 __all__ = [
@@ -46,4 +60,16 @@ __all__ = [
     "run_sector_scenario",
     "sector_adjusted_preset",
     "source_health_summary",
+    "FeatureSet",
+    "QLearningConfig",
+    "QLearningEvaluation",
+    "QLearningModel",
+    "StrategyMetrics",
+    "StrategyResult",
+    "baseline_positions",
+    "build_feature_frame",
+    "evaluate_q_learning",
+    "extract_close_series",
+    "simulate_positions",
+    "train_q_learning",
 ]
