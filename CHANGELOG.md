@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.1.0
+
+- Schnell-, Standard-, Intensiv- und benutzerdefinierter Laufzeitmodus im KI-/RL-Labor.
+- Begrenzbarer Analysezeitraum, maximale Fold-Anzahl und Laufzeitlimit.
+- Vorab-Schätzung von Trainingsschritten und erwarteter Laufzeit.
+- Fortschrittsanzeige je Walk-forward-Fold mit sauberem Stopp an Fold-Grenzen.
+- Verwertbare Teilergebnisse, wenn Fold- oder Zeitlimit erreicht wurde.
+- Cache für vorbereitete Feature- und Walk-forward-Pläne sowie sichtbare Cache-Steuerung.
+- Datenqualitätsbericht für Historien mit Lücken, Duplikaten, ungültigen Preisen und Aktualität.
+- Rotierendes lokales Anwendungsprotokoll unter `data/logs/stock_explorer.log`.
+- Erweiterte gespeicherte AI-Lab-Runs mit Laufzeit-, Planungs- und Abbruchmetadaten.
+- Vier neue Tests für Laufzeitplanung, Datenqualität, sichere Teilresultate und Logging.
+
 ## 7.0.0
 
 - Neuer modularer Einstiegspunkt `stock_explorer.app_runtime` statt Start aus `legacy_app.py`.

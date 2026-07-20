@@ -1,4 +1,4 @@
-# Aktien Explorer V7.0
+# Aktien Explorer V7.1
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
@@ -22,6 +22,27 @@ Wichtige neue Grenzen:
 
 Doppelte ältere News-/Event-Funktionsdefinitionen wurden entfernt. Neue
 Anwendungslogik soll nicht mehr in `legacy_app.py` ergänzt werden.
+
+## Stabilität und Laufzeitkontrolle V7.1
+
+Das KI-/RL-Labor zeigt vor dem Start den erwarteten Rechenaufwand. Vier
+Laufzeitmodi steuern Historienlänge, Episoden, Testfenster, maximale Fold-Anzahl
+und Zeitlimit. Lange Analysen melden ihren Fortschritt nach jedem vollständigen
+Walk-forward-Fold. Wird ein Limit erreicht, bleibt ein konsistentes Teilergebnis
+erhalten; ein bereits laufender Fold wird nicht mitten im Training abgeschnitten.
+
+Zusätzlich prüft das Labor die verwendete Kurshistorie auf:
+
+- ungültige oder nicht positive Preise
+- doppelte Zeitpunkte
+- größere Lücken zwischen Geschäftstagen
+- zu kurze Historien
+- veralteten Datenstand
+
+Vorbereitete Feature- und Walk-forward-Pläne werden zwischengespeichert. Der
+Cache kann direkt im Labor geleert werden. Technische Fehler werden in einem
+rotierenden lokalen Protokoll unter `data/logs/stock_explorer.log` erfasst. Der
+Log-Ordner ist nicht Teil der Git-Versionierung.
 
 ## Installation
 
