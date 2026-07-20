@@ -1,6 +1,7 @@
 """Pure domain models and calculations."""
 
 from .ai_features import FeatureSet, build_feature_frame, extract_close_series
+from .data_quality import HistoryQualityReport, assess_price_history
 from .market_reaction import compute_market_reactions
 from .news_intelligence import (
     ImpactAssessment,
@@ -71,11 +72,13 @@ __all__ = [
     "sector_adjusted_preset",
     "source_health_summary",
     "FeatureSet",
+    "HistoryQualityReport",
     "QLearningConfig",
     "QLearningEvaluation",
     "QLearningModel",
     "StrategyMetrics",
     "StrategyResult",
+    "assess_price_history",
     "baseline_positions",
     "build_feature_frame",
     "evaluate_q_learning",

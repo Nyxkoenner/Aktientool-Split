@@ -11,8 +11,9 @@ import streamlit as st
 
 from stock_explorer import legacy_app as legacy
 from stock_explorer.application import ScannerThresholds, SidebarSelection, selected_tickers
-from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY
+from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY, LOG_DIR
 from stock_explorer.i18n import current_language, t
+from stock_explorer.services.app_logging import configure_application_logging
 from stock_explorer.services.universe_session import UniverseSessionStore
 from stock_explorer.ui import (
     render_ai_lab,
@@ -228,6 +229,7 @@ def _routes(
 
 def main() -> None:
     """Startet den modularen V7-Anwendungsablauf."""
+    configure_application_logging(LOG_DIR)
     st.set_page_config(page_title=APP_TITLE, page_icon="📈", layout="wide")
     with st.sidebar:
         render_language_selector()
