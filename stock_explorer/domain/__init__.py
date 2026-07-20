@@ -18,6 +18,8 @@ from .rl_qlearning import (
     QLearningConfig,
     QLearningEvaluation,
     QLearningModel,
+    clone_q_learning_model,
+    continue_q_learning,
     evaluate_q_learning,
     train_q_learning,
 )
@@ -76,6 +78,8 @@ __all__ = [
     "QLearningConfig",
     "QLearningEvaluation",
     "QLearningModel",
+    "clone_q_learning_model",
+    "continue_q_learning",
     "StrategyMetrics",
     "StrategyResult",
     "assess_price_history",

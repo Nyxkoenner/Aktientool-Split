@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.2.0
+
+- Lokale, versionierte Q-Learning-Modelle pro Aktie unter `data/ai_models/`.
+- Sichere JSON/Gzip-Persistenz ohne Pickle und mit atomarem Dateiaustausch.
+- Vollständiges Neutraining, kontrolliertes Nachtraining nur auf neuen Marktübergängen und reine Out-of-Sample-Auswertung.
+- Kompatibilitätsprüfung für Ticker, Modell-/Feature-Schema, Lernparameter, Kostenparameter und Datenüberlappung.
+- Gespeicherte Metadaten zu Datenstand, Modellvorgänger, Trainingsläufen, Episoden, Zuständen und Datenfingerabdruck.
+- Vergleich zweier Modellversionen über Aktionsübereinstimmung, Kaufquote und Trainingsmetadaten.
+- Gezieltes Löschen einzelner Modellversionen sowie deutsche und englische Oberfläche.
+- Neue Regressionstests für Modell-Roundtrip, Nachtraining, Kompatibilität, Auswertung, Vergleich und Übersetzungen.
+
 ## 7.1.0
 
 - Schnell-, Standard-, Intensiv- und benutzerdefinierter Laufzeitmodus im KI-/RL-Labor.

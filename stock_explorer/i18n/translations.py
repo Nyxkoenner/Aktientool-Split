@@ -1166,6 +1166,141 @@ for _language, _messages in _AI_LAB_TRANSLATIONS.items():
     TRANSLATIONS[_language].update(_messages)
 
 
+_AI_MODEL_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
+    "de": {
+        "ai.model.title": "Persistente Q-Learning-Modelle",
+        "ai.model.caption": (
+            "Speichert nachvollziehbare Modellversionen pro Aktie lokal. Modelle lernen nur nach einer "
+            "ausdrücklichen Aktion weiter; es gibt kein unkontrolliertes Hintergrundtraining."
+        ),
+        "ai.model.none": "Für diese Aktie ist noch kein gespeichertes Modell vorhanden.",
+        "ai.model.select": "Gespeicherte Modellversion auswählen",
+        "ai.model.version": "Modell-ID",
+        "ai.model.data_end": "Datenstand",
+        "ai.model.new_rows": "Neue Handelstage",
+        "ai.model.states": "Q-Zustände",
+        "ai.model.runs": "Trainingsläufe",
+        "ai.model.episodes_total": "Episoden gesamt",
+        "ai.model.mode.full": "vollständiges Training",
+        "ai.model.mode.incremental": "kontrolliertes Nachtraining",
+        "ai.model.metadata_caption": (
+            "Letzter Modus: {mode} · Vorgänger: {parent} · Beobachtungen: {observations} · Datei: {path}"
+        ),
+        "ai.model.status.current": "Das Modell ist auf dem aktuellen Datenstand. Es gibt nichts nachzutrainieren.",
+        "ai.model.status.update_available": ("Nachtraining verfügbar: {count} neue Handelstage bis {date}."),
+        "ai.model.status.incompatible": (
+            "Das Modell kann mit den aktuellen Einstellungen nicht weitertrainiert werden: {reasons}. "
+            "Ein vollständiges Neutraining bleibt möglich."
+        ),
+        "ai.model.reason.ticker_mismatch": "anderer Ticker",
+        "ai.model.reason.schema_mismatch": "veraltetes Modellschema",
+        "ai.model.reason.feature_schema_mismatch": "abweichende Merkmalsdefinition",
+        "ai.model.reason.config_mismatch": "abweichende Lern-/Kostenparameter",
+        "ai.model.reason.no_overlap": "kein überlappender Datenpunkt",
+        "ai.model.reason.no_new_data": "keine neuen Daten",
+        "ai.model.train_full": "Modell vollständig neu trainieren",
+        "ai.model.continue": "Ausgewähltes Modell weitertrainieren",
+        "ai.model.evaluate": "Nur auf neuen Daten auswerten",
+        "ai.model.training_progress": "Modelltraining: Episode {completed} von {total}",
+        "ai.model.trained": "Neue Modellversion {model_id} wurde gespeichert.",
+        "ai.model.continued": ("Modellversion {model_id} wurde mit {count} neuen Handelstagen gespeichert."),
+        "ai.model.error": "Modelltraining oder Speicherung ist fehlgeschlagen: {error}",
+        "ai.model.evaluation_title": "Auswertung auf bisher ungesehenen Daten",
+        "ai.model.evaluation_period": (
+            "Modell {model_id} · {start} bis {end} · {observations} neue Beobachtungen"
+        ),
+        "ai.model.evaluation_notice": (
+            "Diese Kennzahlen verwenden nur Daten nach dem gespeicherten Modellstand. Bei sehr wenigen neuen "
+            "Handelstagen sind sie statistisch nicht belastbar."
+        ),
+        "ai.model.evaluation_error": "Modell konnte nicht auf neuen Daten ausgewertet werden: {error}",
+        "ai.model.compare_title": "Modellversionen vergleichen",
+        "ai.model.compare_select": "Zwei Versionen auswählen",
+        "ai.model.policy_agreement": "Übereinstimmung der Aktionen",
+        "ai.model.first_buy_rate": "Kaufquote Version 1",
+        "ai.model.second_buy_rate": "Kaufquote Version 2",
+        "ai.model.compare_rows": "Verglichene Tage",
+        "ai.model.compare_need_two": "Wähle mindestens zwei Modellversionen aus.",
+        "ai.model.delete_title": "Modellversion löschen",
+        "ai.model.delete_confirm": "Ich möchte die ausgewählte Modellversion dauerhaft löschen.",
+        "ai.model.delete": "Ausgewähltes Modell löschen",
+        "ai.model.deleted": "Modellversion {model_id} wurde gelöscht.",
+        "ai.model.disclaimer": (
+            "Gespeicherte Modelle liegen unter data/ai_models/ und werden nicht automatisch weitertrainiert. "
+            "Walk-forward-Ergebnisse bleiben die maßgebliche historische Validierung; ein gespeichertes Modell "
+            "ist kein Handelssignal."
+        ),
+    },
+    "en": {
+        "ai.model.title": "Persistent Q-learning models",
+        "ai.model.caption": (
+            "Stores auditable model versions locally for each stock. Models learn only after an explicit action; "
+            "there is no uncontrolled background training."
+        ),
+        "ai.model.none": "No stored model exists for this stock yet.",
+        "ai.model.select": "Select a stored model version",
+        "ai.model.version": "Model ID",
+        "ai.model.data_end": "Data through",
+        "ai.model.new_rows": "New trading days",
+        "ai.model.states": "Q states",
+        "ai.model.runs": "Training runs",
+        "ai.model.episodes_total": "Total episodes",
+        "ai.model.mode.full": "full training",
+        "ai.model.mode.incremental": "controlled incremental training",
+        "ai.model.metadata_caption": (
+            "Last mode: {mode} · Parent: {parent} · Observations: {observations} · File: {path}"
+        ),
+        "ai.model.status.current": "The model is current. There is no new data to train on.",
+        "ai.model.status.update_available": (
+            "Incremental training is available for {count} new trading days through {date}."
+        ),
+        "ai.model.status.incompatible": (
+            "The model cannot continue with the current settings: {reasons}. Full retraining remains available."
+        ),
+        "ai.model.reason.ticker_mismatch": "different ticker",
+        "ai.model.reason.schema_mismatch": "outdated model schema",
+        "ai.model.reason.feature_schema_mismatch": "different feature definition",
+        "ai.model.reason.config_mismatch": "different learning/cost parameters",
+        "ai.model.reason.no_overlap": "no overlapping observation",
+        "ai.model.reason.no_new_data": "no new data",
+        "ai.model.train_full": "Train a completely new model",
+        "ai.model.continue": "Continue the selected model",
+        "ai.model.evaluate": "Evaluate on new data only",
+        "ai.model.training_progress": "Model training: episode {completed} of {total}",
+        "ai.model.trained": "Saved new model version {model_id}.",
+        "ai.model.continued": "Saved model version {model_id} using {count} new trading days.",
+        "ai.model.error": "Model training or storage failed: {error}",
+        "ai.model.evaluation_title": "Evaluation on previously unseen data",
+        "ai.model.evaluation_period": (
+            "Model {model_id} · {start} to {end} · {observations} new observations"
+        ),
+        "ai.model.evaluation_notice": (
+            "These metrics use only observations after the stored model's data date. Results based on very few "
+            "new trading days are not statistically reliable."
+        ),
+        "ai.model.evaluation_error": "The model could not be evaluated on new data: {error}",
+        "ai.model.compare_title": "Compare model versions",
+        "ai.model.compare_select": "Select two versions",
+        "ai.model.policy_agreement": "Action agreement",
+        "ai.model.first_buy_rate": "Version 1 buy rate",
+        "ai.model.second_buy_rate": "Version 2 buy rate",
+        "ai.model.compare_rows": "Compared days",
+        "ai.model.compare_need_two": "Select at least two model versions.",
+        "ai.model.delete_title": "Delete model version",
+        "ai.model.delete_confirm": "I want to permanently delete the selected model version.",
+        "ai.model.delete": "Delete selected model",
+        "ai.model.deleted": "Deleted model version {model_id}.",
+        "ai.model.disclaimer": (
+            "Stored models are kept under data/ai_models/ and are never trained automatically. Walk-forward "
+            "results remain the primary historical validation; a stored model is not a trading signal."
+        ),
+    },
+}
+
+for _language, _messages in _AI_MODEL_TRANSLATIONS.items():
+    TRANSLATIONS[_language].update(_messages)
+
+
 def normalize_language(language: str | None) -> str:
     value = str(language or DEFAULT_LANGUAGE).strip().lower()
     return value if value in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE

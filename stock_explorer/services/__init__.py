@@ -9,6 +9,21 @@ from .ai_lab_service import (
     run_ai_lab,
     save_ai_lab_run,
 )
+from .ai_model_store import (
+    ModelCompatibility,
+    ModelEvaluation,
+    ModelMetadata,
+    PolicyComparison,
+    StoredModel,
+    assess_model_compatibility,
+    compare_model_policies,
+    continue_model_artifact,
+    delete_model_artifact,
+    evaluate_model_on_new_data,
+    list_model_artifacts,
+    load_model_artifact,
+    train_new_model_artifact,
+)
 from .app_logging import configure_application_logging
 from .event_database import EventDatabase, EventDatabaseSnapshot
 from .news_intelligence_service import NewsIntelligenceBundle, NewsIntelligenceService
@@ -26,6 +41,19 @@ from .scenario_service import ScenarioAnalysis, analyze_scenario, snapshot_from_
 from .universe_session import UniverseSessionStore, UniverseSnapshot
 
 __all__ = [
+    "ModelCompatibility",
+    "ModelEvaluation",
+    "ModelMetadata",
+    "PolicyComparison",
+    "StoredModel",
+    "assess_model_compatibility",
+    "compare_model_policies",
+    "continue_model_artifact",
+    "delete_model_artifact",
+    "evaluate_model_on_new_data",
+    "list_model_artifacts",
+    "load_model_artifact",
+    "train_new_model_artifact",
     "AILabPlan",
     "AILabResult",
     "CompanyReportService",

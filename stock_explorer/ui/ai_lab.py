@@ -20,6 +20,17 @@ from stock_explorer.services.ai_lab_service import (
     run_ai_lab,
     save_ai_lab_run,
 )
+from stock_explorer.services.ai_model_store import (
+    ModelEvaluation,
+    StoredModel,
+    assess_model_compatibility,
+    compare_model_policies,
+    continue_model_artifact,
+    delete_model_artifact,
+    evaluate_model_on_new_data,
+    list_model_artifacts,
+    train_new_model_artifact,
+)
 from stock_explorer.services.runtime_control import (
     ProgressUpdate,
     RunLimits,
@@ -218,6 +229,262 @@ def _render_workload(plan: AILabPlan, max_folds: int, language: str) -> None:
     st.caption(t("ai.workload.notice", language))
 
 
+def _model_label(stored: StoredModel) -> str:
+    metadata = stored.metadata
+    updated = pd.Timestamp(metadata.updated_at_utc).strftime("%Y-%m-%d %H:%M")
+    data_end = pd.Timestamp(metadata.data_end).strftime("%Y-%m-%d")
+    return f"{updated} · Daten bis {data_end} · {metadata.model_id}"
+
+
+def _render_model_metadata(stored: StoredModel, new_observations: int, language: str) -> None:
+    metadata = stored.metadata
+    columns = st.columns(6)
+    columns[0].metric(t("ai.model.version", language), metadata.model_id)
+    columns[1].metric(t("ai.model.data_end", language), f"{pd.Timestamp(metadata.data_end):%Y-%m-%d}")
+    columns[2].metric(t("ai.model.new_rows", language), new_observations)
+    columns[3].metric(t("ai.model.states", language), metadata.q_states)
+    columns[4].metric(t("ai.model.runs", language), metadata.training_runs)
+    columns[5].metric(t("ai.model.episodes_total", language), metadata.total_episodes)
+    mode = t(f"ai.model.mode.{metadata.last_training_mode}", language)
+    parent = metadata.parent_model_id or t("common.none", language)
+    st.caption(
+        t(
+            "ai.model.metadata_caption",
+            language,
+            mode=mode,
+            parent=parent,
+            observations=metadata.observations,
+            path=stored.path,
+        )
+    )
+
+
+def _render_model_evaluation(value: tuple[str, ModelEvaluation] | None, language: str) -> None:
+    if value is None:
+        return
+    model_id, evaluation = value
+    metrics = evaluation.evaluation.result.metrics
+    st.subheader(t("ai.model.evaluation_title", language))
+    st.caption(
+        t(
+            "ai.model.evaluation_period",
+            language,
+            model_id=model_id,
+            start=evaluation.start.strftime("%Y-%m-%d"),
+            end=evaluation.end.strftime("%Y-%m-%d"),
+            observations=evaluation.observations,
+        )
+    )
+    columns = st.columns(5)
+    columns[0].metric(
+        t("ai.column.total_return", language),
+        format_percent(metrics.total_return_pct, 1, language, signed=True),
+    )
+    columns[1].metric(
+        t("ai.column.annualized", language),
+        format_percent(metrics.annualized_return_pct, 1, language, signed=True),
+    )
+    columns[2].metric(t("ai.column.sharpe", language), format_number(metrics.sharpe_ratio, 2, language))
+    columns[3].metric(
+        t("ai.column.drawdown", language),
+        format_percent(metrics.max_drawdown_pct, 1, language, signed=True),
+    )
+    columns[4].metric(t("ai.column.trades", language), metrics.trades)
+    st.info(t("ai.model.evaluation_notice", language))
+
+
+def _render_model_management(
+    *,
+    ticker: str,
+    features: pd.DataFrame,
+    config: QLearningConfig,
+    directory: Path,
+    language: str,
+) -> None:
+    st.subheader(t("ai.model.title", language))
+    st.caption(t("ai.model.caption", language))
+    flash_key = f"ai_model_flash_{ticker}"
+    flash = st.session_state.pop(flash_key, None)
+    if flash:
+        st.success(str(flash))
+
+    models = list_model_artifacts(directory, ticker=ticker)
+    model_ids = [item.metadata.model_id for item in models]
+    model_by_id = {item.metadata.model_id: item for item in models}
+    select_key = f"ai_model_selection_{ticker}"
+    if st.session_state.get(select_key) not in model_ids:
+        st.session_state.pop(select_key, None)
+
+    selected: StoredModel | None = None
+    compatibility = None
+    if models:
+        selected_id = st.selectbox(
+            t("ai.model.select", language),
+            model_ids,
+            format_func=lambda value: _model_label(model_by_id[value]),
+            key=select_key,
+        )
+        selected = model_by_id[selected_id]
+        compatibility = assess_model_compatibility(
+            selected,
+            features,
+            ticker=ticker,
+            config=config,
+        )
+        _render_model_metadata(selected, compatibility.new_observations, language)
+        if compatibility.compatible:
+            if compatibility.new_observations > 0:
+                st.success(
+                    t(
+                        "ai.model.status.update_available",
+                        language,
+                        count=compatibility.new_observations,
+                        date=compatibility.latest_data_end.strftime("%Y-%m-%d"),
+                    )
+                )
+            else:
+                st.info(t("ai.model.status.current", language))
+        else:
+            labels = [t(f"ai.model.reason.{reason}", language) for reason in compatibility.reasons]
+            st.warning(t("ai.model.status.incompatible", language, reasons=" · ".join(labels)))
+    else:
+        st.info(t("ai.model.none", language))
+
+    button_columns = st.columns(3)
+    train_full = button_columns[0].button(
+        t("ai.model.train_full", language),
+        key=f"ai_model_train_full_{ticker}",
+        type="primary",
+    )
+    continue_disabled = selected is None or compatibility is None or not compatibility.can_continue
+    train_incremental = button_columns[1].button(
+        t("ai.model.continue", language),
+        key=f"ai_model_continue_{ticker}",
+        disabled=continue_disabled,
+    )
+    evaluate_disabled = selected is None or compatibility is None or not compatibility.can_evaluate
+    evaluate_only = button_columns[2].button(
+        t("ai.model.evaluate", language),
+        key=f"ai_model_evaluate_{ticker}",
+        disabled=evaluate_disabled,
+    )
+
+    if train_full or train_incremental:
+        progress = st.progress(0.0)
+        progress_text = st.empty()
+
+        def model_progress(completed: int, total: int) -> None:
+            progress.progress(completed / max(total, 1))
+            progress_text.caption(t("ai.model.training_progress", language, completed=completed, total=total))
+
+        try:
+            if train_full:
+                stored = train_new_model_artifact(
+                    features,
+                    ticker=ticker,
+                    config=config,
+                    directory=directory,
+                    progress_callback=model_progress,
+                )
+                message = t("ai.model.trained", language, model_id=stored.metadata.model_id)
+            else:
+                if selected is None:
+                    raise ValueError("Kein Modell ausgewählt.")
+                stored = continue_model_artifact(
+                    selected,
+                    features,
+                    ticker=ticker,
+                    config=config,
+                    directory=directory,
+                    episodes=config.episodes,
+                    seed=config.seed,
+                    progress_callback=model_progress,
+                )
+                message = t(
+                    "ai.model.continued",
+                    language,
+                    model_id=stored.metadata.model_id,
+                    count=stored.metadata.new_observations,
+                )
+            st.session_state[flash_key] = message
+            st.rerun()
+        except Exception as error:
+            LOGGER.exception("Persistent AI model training failed for %s", ticker)
+            st.error(t("ai.model.error", language, error=error))
+
+    evaluation_key = f"ai_model_evaluation_{ticker}"
+    if evaluate_only and selected is not None:
+        try:
+            evaluation = evaluate_model_on_new_data(selected, features)
+            st.session_state[evaluation_key] = (selected.metadata.model_id, evaluation)
+        except Exception as error:
+            LOGGER.exception("Stored AI model evaluation failed for %s", ticker)
+            st.error(t("ai.model.evaluation_error", language, error=error))
+    value = st.session_state.get(evaluation_key)
+    _render_model_evaluation(value if isinstance(value, tuple) else None, language)
+
+    if len(models) >= 2:
+        with st.expander(t("ai.model.compare_title", language)):
+            comparison_ids = st.multiselect(
+                t("ai.model.compare_select", language),
+                model_ids,
+                default=model_ids[:2],
+                format_func=lambda value: _model_label(model_by_id[value]),
+                key=f"ai_model_compare_{ticker}",
+            )
+            if len(comparison_ids) >= 2:
+                first = model_by_id[comparison_ids[0]]
+                second = model_by_id[comparison_ids[1]]
+                comparison = compare_model_policies(first, second, features)
+                compare_columns = st.columns(4)
+                compare_columns[0].metric(
+                    t("ai.model.policy_agreement", language),
+                    format_percent(comparison.agreement_pct, 1, language),
+                )
+                compare_columns[1].metric(
+                    t("ai.model.first_buy_rate", language),
+                    format_percent(comparison.first_buy_pct, 1, language),
+                )
+                compare_columns[2].metric(
+                    t("ai.model.second_buy_rate", language),
+                    format_percent(comparison.second_buy_pct, 1, language),
+                )
+                compare_columns[3].metric(t("ai.model.compare_rows", language), comparison.observations)
+                comparison_frame = pd.DataFrame(
+                    [
+                        {
+                            t("ai.model.version", language): item.metadata.model_id,
+                            t("ai.model.data_end", language): item.metadata.data_end,
+                            t("ai.model.states", language): item.metadata.q_states,
+                            t("ai.model.runs", language): item.metadata.training_runs,
+                            t("ai.model.episodes_total", language): item.metadata.total_episodes,
+                        }
+                        for item in (first, second)
+                    ]
+                )
+                st.dataframe(comparison_frame, width="stretch", hide_index=True)
+            else:
+                st.caption(t("ai.model.compare_need_two", language))
+
+    if selected is not None:
+        with st.expander(t("ai.model.delete_title", language)):
+            confirmation = st.checkbox(
+                t("ai.model.delete_confirm", language),
+                key=f"ai_model_delete_confirm_{ticker}",
+            )
+            if st.button(
+                t("ai.model.delete", language),
+                key=f"ai_model_delete_{ticker}",
+                disabled=not confirmation,
+            ):
+                deleted_id = selected.metadata.model_id
+                delete_model_artifact(selected)
+                st.session_state[flash_key] = t("ai.model.deleted", language, model_id=deleted_id)
+                st.rerun()
+
+    st.caption(t("ai.model.disclaimer", language))
+
+
 def render_ai_lab(
     data: pd.DataFrame,
     *,
@@ -352,6 +619,14 @@ def render_ai_lab(
     if st.button(t("ai.clear_cache", language), key="ai_clear_cache"):
         _cached_plan.clear()
         st.success(t("ai.cache_cleared", language))
+
+    _render_model_management(
+        ticker=ticker,
+        features=plan.features.frame,
+        config=q_learning,
+        directory=storage_dir.parent / "ai_models",
+        language=language,
+    )
 
     run_key = f"ai_lab_result_{ticker}"
     running_key = f"ai_lab_running_{ticker}"
