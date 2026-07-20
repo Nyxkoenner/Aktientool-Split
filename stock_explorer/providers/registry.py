@@ -11,6 +11,7 @@ from stock_explorer.services.profile_service import CompanyProfileService
 from stock_explorer.services.report_service import CompanyReportService
 
 from .annual_reports import SecAnnualReportProvider
+from .article_text import ArticleTextProvider
 from .base import MarketDataProvider
 from .company_profiles import YahooCompanyProfileProvider
 from .events import ManualCsvEventProvider, SecFilingEventProvider, YahooCalendarEventProvider
@@ -26,6 +27,14 @@ from .yahoo import YahooMarketDataProvider
 
 def _configured(name: str, default: str) -> str:
     return os.environ.get(name, default).strip().lower()
+
+
+def get_article_text_provider(
+    *,
+    headers: dict[str, str] | None = None,
+    http_client: HttpClient | None = None,
+) -> ArticleTextProvider:
+    return ArticleTextProvider(http_client=http_client, headers=headers)
 
 
 def get_market_provider(name: str | None = None) -> MarketDataProvider:
