@@ -39,6 +39,7 @@ logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 from dateutil import parser as dateparser
 
 from stock_explorer.providers.registry import get_market_provider
+from stock_explorer.ui import render_portfolio_simulation, render_scenario_engine
 
 MARKET_PROVIDER = get_market_provider()
 
@@ -47,7 +48,7 @@ MARKET_PROVIDER = get_market_provider()
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.0.0"
+APP_VERSION = "6.1.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -12628,7 +12629,7 @@ def main() -> None:
     # Streamlit-Rerun erhalten, zum Beispiel nach dem Aktualisieren der News.
     main_pages = [
         "Überblick", "Datenstatus", "Fundamentaldaten", "Aktienprofile", "Einzelanalyse", "Sektoren",
-        "News & Events", "Portfolio", "Watchlist", "Value-Scanner", "Deep Value", "Backtesting", "Mustervergleich", "Lernmodul", "Unternehmensprofile", "Superinvestoren", "Research",
+        "News & Events", "Portfolio", "Portfolio-Simulation", "Szenarien", "Watchlist", "Value-Scanner", "Deep Value", "Backtesting", "Mustervergleich", "Lernmodul", "Unternehmensprofile", "Superinvestoren", "Research",
     ]
     if st.session_state.get("main_navigation") not in main_pages:
         st.session_state["main_navigation"] = main_pages[0]
@@ -12658,6 +12659,13 @@ def main() -> None:
         render_news(data)
     elif active_page == "Portfolio":
         render_portfolio(data, histories)
+    elif active_page == "Portfolio-Simulation":
+        holdings, _, warnings = portfolio_input()
+        for warning in warnings:
+            st.warning(warning)
+        render_portfolio_simulation(data, histories, holdings)
+    elif active_page == "Szenarien":
+        render_scenario_engine(data)
     elif active_page == "Watchlist":
         render_watchlist(
             data,
