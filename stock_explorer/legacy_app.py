@@ -1,16 +1,9 @@
-"""
-Aktien Explorer – überarbeitete Einzeldatei für Streamlit.
+"""Kompatibilitätsschicht für noch nicht vollständig migrierte Fachseiten.
 
-Start:
-    python -m streamlit run app.py
-
-Hinweise:
-- Die App nutzt yfinance als Datenquelle. Daten können fehlen, verzögert oder
-  von Yahoo geändert sein. Sie dienen der Recherche und sind keine Anlageberatung.
-- Lege optional eine portfolio.csv in denselben Ordner. Beispiel:
-  ticker_yahoo,shares,cost_basis,currency,purchase_date
-  ALV.DE,10,245.50,EUR,2024-01-15
-  MSFT,5,390.00,USD,2024-02-10
+Der Streamlit-Einstieg und die Navigation liegen seit V7 in
+``stock_explorer.app_runtime``. Dieses Modul enthält weiterhin ältere
+Fachberechnungen und Seitenrenderer, bis sie schrittweise in eigene Pakete
+überführt werden. Neue Anwendungslogik gehört nicht mehr in diese Datei.
 """
 
 from __future__ import annotations
@@ -38,6 +31,27 @@ import yfinance as yf
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 from dateutil import parser as dateparser
 
+from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY
+from stock_explorer.domain.value_utils import (
+    clean_ticker,
+    deduplicate_dataframe_columns,
+    display_text,
+    empty_metrics_frame,
+    ensure_datetime_index,
+    find_col,
+    format_eur,
+    format_number,
+    format_percent,
+    human_market_cap,
+    is_financial_sector,
+    is_probably_german_yahoo_symbol,
+    merge_computed_columns,
+    normalize_columns,
+    safe_float,
+    safe_session_date,
+    to_percent,
+)
+from stock_explorer.ui.company_select import company_selectbox
 from stock_explorer.providers.events import SecFilingEventProvider
 from stock_explorer.providers.registry import (
     get_article_text_provider,
@@ -50,20 +64,13 @@ from stock_explorer.providers.registry import (
     get_profile_service,
     get_sec_provider,
 )
-from stock_explorer.i18n import current_language, t
 from stock_explorer.services import NewsIntelligenceService
 from stock_explorer.ui import (
     normalize_page_id,
-    render_ai_lab,
     render_annual_report_automation,
     render_header,
-    render_language_selector,
-    render_main_navigation,
     render_news_intelligence,
-    render_portfolio_simulation,
     render_profile_automation,
-    render_scenario_engine,
-    render_source_monitor,
 )
 
 MARKET_PROVIDER = get_market_provider()
@@ -76,10 +83,6 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # -----------------------------------------------------------------------------
 # App-Konfiguration
 # -----------------------------------------------------------------------------
-
-APP_VERSION = "6.9.0"
-APP_TITLE = "Aktien Explorer"
-BASE_CURRENCY = "EUR"
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
@@ -508,328 +511,8 @@ INDEX_SERVICE = get_index_service(
 
 
 # -----------------------------------------------------------------------------
-# Allgemeine Hilfsfunktionen
+# Allgemeine Hilfsfunktionen sind in domain/value_utils.py ausgelagert.
 # -----------------------------------------------------------------------------
-
-
-def safe_float(value: Any) -> Optional[float]:
-    """Wandelt Werte robust in float um; unbrauchbare Werte werden None."""
-    if value is None:
-        return None
-    try:
-        result = float(value)
-    except (TypeError, ValueError):
-        return None
-    return result if pd.notna(result) else None
-
-
-def deduplicate_dataframe_columns(frame: pd.DataFrame) -> pd.DataFrame:
-    """Entfernt doppelte Spalten robust und behält die zuletzt berechnete Variante.
-
-    Profil- und Score-Spalten können bereits als leere Platzhalter im Rohdaten-Frame
-    vorhanden sein. Werden berechnete Spalten anschließend per ``pd.concat`` ergänzt,
-    entstehen identische Spaltennamen. Bei ``row.get(...)`` liefert Pandas dann eine
-    Series statt eines Einzelwerts. Diese Funktion verhindert genau diesen Zustand.
-    """
-    if frame is None:
-        return frame
-    if not isinstance(frame, pd.DataFrame) or frame.empty:
-        return frame.copy() if isinstance(frame, pd.DataFrame) else frame
-    if not frame.columns.duplicated().any():
-        return frame.copy()
-    return frame.loc[:, ~frame.columns.duplicated(keep="last")].copy()
-
-
-def merge_computed_columns(base: pd.DataFrame, computed: Any) -> pd.DataFrame:
-    """Schreibt berechnete Spalten in einen DataFrame und überschreibt Platzhalter.
-
-    Im Gegensatz zu ``pd.concat(..., axis=1)`` werden vorhandene Spalten mit gleichem
-    Namen ersetzt. Dadurch bleiben alle Spaltennamen eindeutig – auch bei erneuten
-    Streamlit-Reruns, Slideränderungen und separat geladenen Watchlist-Daten.
-    """
-    result = deduplicate_dataframe_columns(base)
-    if computed is None:
-        return result
-    if isinstance(computed, pd.Series):
-        computed = computed.to_frame()
-    if not isinstance(computed, pd.DataFrame) or computed.empty:
-        return result
-    computed = deduplicate_dataframe_columns(computed)
-    for column in computed.columns:
-        result[column] = computed[column].reindex(result.index)
-    return result
-
-
-def display_text(value: Any, fallback: str = "–") -> str:
-    """Bereitet Einzelwerte, Listen und versehentlich gelieferte Series fürs UI auf."""
-    if isinstance(value, pd.Series):
-        parts = []
-        for item in value.tolist():
-            rendered = display_text(item, fallback="")
-            if rendered and rendered not in parts:
-                parts.append(rendered)
-        return " | ".join(parts) if parts else fallback
-    if isinstance(value, (list, tuple, set)):
-        parts = [display_text(item, fallback="") for item in value]
-        parts = [part for part in parts if part]
-        return " | ".join(parts) if parts else fallback
-    if isinstance(value, dict):
-        if not value:
-            return fallback
-        return " | ".join(f"{key}: {display_text(item, fallback='')}" for key, item in value.items())
-    if value is None:
-        return fallback
-    try:
-        if pd.isna(value):
-            return fallback
-    except (TypeError, ValueError):
-        pass
-    text_value = str(value).strip()
-    return text_value if text_value else fallback
-
-
-def safe_session_date(
-    value: Any,
-    fallback: Any,
-    min_date: Any = None,
-    max_date: Any = None,
-):
-    """Liest ein Datum aus dem Streamlit Session State robust ein.
-
-    ``pd.Timestamp(None)`` liefert ``NaT`` statt eine Exception auszulösen.
-    Ohne explizite NaT-Prüfung führt ein anschließender Vergleich mit
-    ``datetime.date`` zu ``TypeError: Cannot compare NaT with datetime.date``.
-    """
-    try:
-        fallback_date = pd.Timestamp(fallback).date()
-    except Exception:
-        fallback_date = fallback
-
-    try:
-        parsed = pd.to_datetime(value, errors="coerce")
-        if pd.isna(parsed):
-            return fallback_date
-        result = pd.Timestamp(parsed).date()
-    except Exception:
-        return fallback_date
-
-    if min_date is not None and result < min_date:
-        return fallback_date
-    if max_date is not None and result > max_date:
-        return fallback_date
-    return result
-
-
-def to_percent(value: Any) -> Optional[float]:
-    """Yahoo liefert einige Quoten als Dezimalzahl, andere bereits in Prozent."""
-    number = safe_float(value)
-    if number is None:
-        return None
-    return number * 100.0 if abs(number) <= 1 else number
-
-
-def clean_ticker(ticker: Any) -> str:
-    """Normalisiert Yahoo-Ticker und entfernt Artefakte aus Webtabellen.
-
-    Wikipedia/Finanzseiten enthalten teils Fußnoten, Dollarzeichen oder
-    unsichtbare Leerzeichen. Diese Artefakte führten beim SDAX-Fallback zu
-    Symbolen wie $SRV.DE.
-    """
-    value = str(ticker or "").strip().upper()
-    value = re.sub(r"\[.*?\]", "", value)
-    value = value.replace("\xa0", " ").replace("–", "-").replace("—", "-")
-    value = value.strip().lstrip("$")
-    value = re.sub(r"\s+", "", value)
-    # Für Yahoo sind Buchstaben, Zahlen, Punkt und Bindestrich relevant.
-    value = re.sub(r"[^A-Z0-9.\-]", "", value)
-    return value
-
-
-def is_probably_german_yahoo_symbol(symbol: str, exchange: str = "") -> bool:
-    """Prüft, ob ein Yahoo-Suchtreffer plausibel zu einem deutschen Index passt.
-
-    Wichtig: Der Yahoo-Search-Fallback darf US-Symbole wie TSLX oder OTC-Symbole
-    wie DRRKF nicht einfach mit .DE ergänzen. Genau dadurch entstanden beim SDAX
-    ungültige Ticker wie TSLX.DE oder DRRKF.DE.
-    """
-    symbol = clean_ticker(symbol)
-    exchange = str(exchange or "").upper().strip()
-    if not symbol:
-        return False
-    if symbol.endswith(GERMAN_INDEX_ALLOWED_SUFFIXES):
-        return True
-    german_exchanges = {"GER", "ETR", "EUX", "FRA", "STU", "MUN", "HAM", "HAN", "DUS", "BER"}
-    if exchange in german_exchanges and "." not in symbol:
-        return True
-    return False
-
-
-def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    result = df.copy()
-    result.columns = [str(column).strip() for column in result.columns]
-    return result
-
-
-def find_col(columns: Iterable[str], candidates: Iterable[str]) -> Optional[str]:
-    """Findet Spalten auch bei leicht abweichender Wikipedia-Benennung."""
-    available = {str(column).lower(): str(column) for column in columns}
-    for candidate in candidates:
-        if candidate.lower() in available:
-            return available[candidate.lower()]
-
-    for column in columns:
-        column_lower = str(column).lower()
-        if any(candidate.lower() in column_lower for candidate in candidates):
-            return str(column)
-    return None
-
-
-def format_number(value: Any, decimals: int = 2, suffix: str = "") -> str:
-    """Formatiert Zahlen im deutschen Stil: 1.234.567,89."""
-    number = safe_float(value)
-    if number is None:
-        return "–"
-    return (
-        f"{number:,.{decimals}f}{suffix}"
-        .replace(",", "X")
-        .replace(".", ",")
-        .replace("X", ".")
-    )
-
-
-def format_percent(value: Any, decimals: int = 1, signed: bool = False) -> str:
-    """Formatiert Prozentwerte im deutschen Stil."""
-    number = safe_float(value)
-    if number is None:
-        return "–"
-    prefix = "+" if signed and number > 0 else ""
-    return f"{prefix}{format_number(number, decimals)} %"
-
-
-def format_eur(value: Any, decimals: int = 2, signed: bool = False) -> str:
-    """Formatiert Beträge, die intern bereits in Euro vorliegen."""
-    number = safe_float(value)
-    if number is None:
-        return "–"
-    prefix = "+" if signed and number > 0 else ""
-    return f"{prefix}{format_number(number, decimals)} EUR"
-
-
-def human_market_cap(value: Any) -> str:
-    """Kompakte Marktkapitalisierung: Mio., Mrd. oder Bio. mit deutschem Zahlenformat."""
-    number = safe_float(value)
-    if number is None:
-        return "–"
-
-    absolute = abs(number)
-    if absolute >= 1_000_000_000_000:
-        return f"{format_number(number / 1_000_000_000_000, 1)} Bio."
-    if absolute >= 1_000_000_000:
-        return f"{format_number(number / 1_000_000_000, 1)} Mrd."
-    if absolute >= 1_000_000:
-        return f"{format_number(number / 1_000_000, 1)} Mio."
-    return format_number(number, 0)
-
-
-def company_selectbox(
-    label: str,
-    df: pd.DataFrame,
-    key: str,
-    *,
-    ticker_col: str = "ticker_yahoo",
-    name_col: str = "name",
-    sort_by_name: bool = True,
-    **selectbox_kwargs: Any,
-) -> str:
-    """Zeigt Firmenname und Ticker, gibt intern aber nur den Ticker zurück.
-
-    Beispiel in der Oberfläche: ``Bayer (BAYN.DE)``. Bestehende Berechnungen
-    arbeiten unverändert mit ``BAYN.DE`` weiter. Der Helper räumt außerdem
-    veraltete Session-State-Werte nach einem Index- oder Filterwechsel auf.
-    """
-    if df is None or df.empty or ticker_col not in df.columns:
-        raise ValueError("Für die Aktienauswahl sind keine Ticker verfügbar.")
-
-    columns = [ticker_col]
-    if name_col in df.columns:
-        columns.append(name_col)
-
-    choices = df[columns].copy()
-    choices[ticker_col] = choices[ticker_col].fillna("").astype(str).str.strip()
-    choices = choices[choices[ticker_col].ne("")].drop_duplicates(subset=[ticker_col])
-    if choices.empty:
-        raise ValueError("Für die Aktienauswahl sind keine gültigen Ticker verfügbar.")
-
-    if name_col not in choices.columns:
-        choices[name_col] = choices[ticker_col]
-    else:
-        choices[name_col] = choices[name_col].fillna("").astype(str).str.strip()
-        choices.loc[choices[name_col].eq(""), name_col] = choices.loc[choices[name_col].eq(""), ticker_col]
-
-    if sort_by_name:
-        choices = choices.assign(_sort_name=choices[name_col].str.casefold()).sort_values(
-            ["_sort_name", ticker_col], kind="stable"
-        )
-
-    options = choices[ticker_col].tolist()
-    labels = {
-        row[ticker_col]: (
-            f"{row[name_col]} ({row[ticker_col]})"
-            if row[name_col] != row[ticker_col]
-            else row[ticker_col]
-        )
-        for _, row in choices.iterrows()
-    }
-
-    # Nach Index-/Filterwechseln kann ein alter Ticker im Session State liegen.
-    # Vor Erzeugung des Widgets entfernen, damit Streamlit keinen ungültigen Wert hält.
-    if key in st.session_state and st.session_state[key] not in options:
-        del st.session_state[key]
-
-    return st.selectbox(
-        label,
-        options=options,
-        format_func=lambda ticker: labels.get(ticker, str(ticker)),
-        key=key,
-        **selectbox_kwargs,
-    )
-
-
-def is_financial_sector(sector: Any) -> bool:
-    text = str(sector or "").lower()
-    return any(term in text for term in FINANCIAL_SECTOR_TERMS)
-
-
-def ensure_datetime_index(frame: pd.DataFrame) -> pd.DataFrame:
-    result = frame.copy()
-    result.index = pd.to_datetime(result.index, errors="coerce")
-    result = result[~result.index.isna()]
-    if getattr(result.index, "tz", None) is not None:
-        result.index = result.index.tz_localize(None)
-    return result.sort_index()
-
-
-def empty_metrics_frame() -> pd.DataFrame:
-    columns = [
-        "name", "ticker_yahoo", "sector", "currency", "last_price", "change_1d",
-        "change_5d", "change_1y", "total_return_1y", "vol_30d", "vol_1y",
-        "max_drawdown_1y", "drawdown_3y_high_pct", "drawdown_5y_high_pct",
-        "high_52w", "low_52w", "market_cap", "pe_ratio",
-        "forward_pe", "pb_ratio", "ps_ratio", "ev_ebitda", "net_margin",
-        "operating_margin", "roe", "roa", "dividend_yield", "dividend_per_share",
-        "payout_ratio", "dividend_growth_5y", "dividend_frequency",
-        "dividend_yield_5y_avg", "dividend_yield_vs_5y_avg_pct",
-        "operating_cashflow", "free_cashflow", "shares_outstanding",
-        "cashflow_dividend_coverage", "debt_to_equity", "net_debt_ebitda", "beta",
-        "revenue_growth", "earnings_growth", "earnings_quarterly_growth",
-        "gross_margin", "ebitda_margin", "current_ratio", "quick_ratio",
-        "change_1m", "change_3m", "change_6m", "price_vs_sma50_pct", "price_vs_sma200_pct",
-        "growth_score", "growth_coverage", "growth_components",
-        "momentum_score", "momentum_coverage", "momentum_components",
-        "safety_score", "safety_coverage", "safety_components",
-        "data_updated_at",
-    ]
-    return pd.DataFrame(columns=columns)
 
 
 # -----------------------------------------------------------------------------
@@ -1875,7 +1558,6 @@ def compute_value_trigger_and_score(
     })
 
 
-
 def _normalised_component_score(
     components: list[tuple[str, Optional[float], float]],
 ) -> pd.Series:
@@ -2586,7 +2268,6 @@ def fetch_news_for_ticker(ticker: str, company_name: str, days_back: int, max_it
     return pd.DataFrame(entries).sort_values("published", ascending=False).head(max_items).reset_index(drop=True)
 
 
-
 # -----------------------------------------------------------------------------
 # Version 3.0 – Datenqualität, News-/Event-Pipeline, Portfolio-Risiko & Research
 # -----------------------------------------------------------------------------
@@ -2792,16 +2473,6 @@ def empty_news_frame() -> pd.DataFrame:
             "matched_alias", "sentiment_score", "sentiment_label", "sentiment_confidence",
             "sentiment_reason", "event_type", "relevance_score", "relevance_label",
             "relevance_reason", "is_relevant",
-        ]
-    )
-
-
-def empty_events_frame() -> pd.DataFrame:
-    return pd.DataFrame(
-        columns=[
-            "date", "ticker_yahoo", "event_type", "title", "source", "link",
-            "sentiment_score", "sentiment_label", "sentiment_confidence",
-            "sentiment_reason", "importance", "is_future_event",
         ]
     )
 
@@ -3146,119 +2817,6 @@ def fetch_news_bundle(
         max_items=max_items,
     )
 
-def news_to_events(news: pd.DataFrame, ticker: str) -> pd.DataFrame:
-    """Übernimmt nur relevante, konkret klassifizierte Nachrichten in den Kalender."""
-    if news is None or news.empty:
-        return empty_events_frame()
-
-    eligible = news.copy()
-    if "is_relevant" in eligible.columns:
-        eligible = eligible[eligible["is_relevant"].fillna(False)]
-    if "event_type" in eligible.columns:
-        eligible = eligible[eligible["event_type"].astype(str) != "news"]
-    if eligible.empty:
-        return empty_events_frame()
-
-    events = pd.DataFrame(
-        {
-            "date": pd.to_datetime(eligible["published"], errors="coerce"),
-            "ticker_yahoo": ticker,
-            "event_type": eligible.get("event_type", "news"),
-            "title": eligible.get("title", ""),
-            "source": eligible.get("source", ""),
-            "link": eligible.get("link", ""),
-            "sentiment_score": eligible.get("sentiment_score", 0.0),
-            "sentiment_label": eligible.get("sentiment_label", "neutral"),
-            "sentiment_confidence": eligible.get("sentiment_confidence", "niedrig"),
-            "sentiment_reason": eligible.get("sentiment_reason", ""),
-            "importance": "mittel",
-            "is_future_event": False,
-        }
-    )
-    return events.dropna(subset=["date"]).reset_index(drop=True)
-
-
-def persist_events(events: pd.DataFrame, replace_ticker: Optional[str] = None) -> tuple[bool, str]:
-    """Speichert Kalenderdaten; bei Aktualisierung kann ein Ticker ersetzt werden.
-
-    Das verhindert, dass alte, vor einer Alias-Korrektur gespeicherte
-    Google-News-Ereignisse dauerhaft im Chart verbleiben.
-    """
-    if events is None:
-        events = empty_events_frame()
-
-    existing = empty_events_frame()
-    if EVENTS_PATH.exists():
-        try:
-            existing = pd.read_csv(EVENTS_PATH)
-        except Exception:
-            existing = empty_events_frame()
-
-    if replace_ticker:
-        ticker = clean_ticker(replace_ticker)
-        if not existing.empty and "ticker_yahoo" in existing.columns:
-            existing["ticker_yahoo"] = existing["ticker_yahoo"].map(clean_ticker)
-            existing = existing[existing["ticker_yahoo"] != ticker].copy()
-
-    combined = pd.concat([existing, events], ignore_index=True)
-    if combined.empty:
-        return safe_write_csv(empty_events_frame(), EVENTS_PATH)
-
-    combined["date"] = pd.to_datetime(combined["date"], errors="coerce")
-    combined = combined.dropna(subset=["date"])
-    combined["date"] = combined["date"].dt.strftime("%Y-%m-%d")
-    combined = (
-        combined.drop_duplicates(["ticker_yahoo", "date", "event_type", "title"], keep="last")
-        .sort_values(["ticker_yahoo", "date"], ascending=[True, False])
-    )
-    return safe_write_csv(combined, EVENTS_PATH)
-
-
-def load_persisted_events(ticker: str, days_back: int = 1825) -> pd.DataFrame:
-    if not EVENTS_PATH.exists():
-        return empty_events_frame()
-    try:
-        events = pd.read_csv(EVENTS_PATH)
-    except Exception:
-        return empty_events_frame()
-    if events.empty or "ticker_yahoo" not in events.columns:
-        return empty_events_frame()
-    events["ticker_yahoo"] = events["ticker_yahoo"].map(clean_ticker)
-    events["date"] = pd.to_datetime(events["date"], errors="coerce")
-    cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=days_back)
-    events = events[
-        (events["ticker_yahoo"] == clean_ticker(ticker)) & (events["date"] >= cutoff)
-    ].copy()
-    for column, default in {
-        "sentiment_score": 0.0,
-        "sentiment_label": "neutral",
-        "sentiment_confidence": "niedrig",
-        "sentiment_reason": "",
-        "importance": "mittel",
-        "is_future_event": False,
-        "link": "",
-        "source": "",
-        "title": "",
-        "event_type": "news",
-    }.items():
-        if column not in events.columns:
-            events[column] = default
-    return events.sort_values("date", ascending=False).reset_index(drop=True)
-
-
-def combine_events(news: pd.DataFrame, calendar_events: pd.DataFrame, ticker: str) -> pd.DataFrame:
-    combined = pd.concat([news_to_events(news, ticker), calendar_events], ignore_index=True)
-    if combined.empty:
-        return empty_events_frame()
-    combined["date"] = pd.to_datetime(combined["date"], errors="coerce")
-    combined = combined.dropna(subset=["date"])
-    combined = (
-        combined.drop_duplicates(["ticker_yahoo", "date", "event_type", "title"])
-        .sort_values("date", ascending=False)
-        .reset_index(drop=True)
-    )
-    return combined
-
 
 def empty_transactions_frame() -> pd.DataFrame:
     return pd.DataFrame(
@@ -3472,7 +3030,6 @@ def fetch_benchmark_history(benchmark: str, period: str = "5y") -> pd.DataFrame:
     return ensure_datetime_index(history) if not history.empty else pd.DataFrame()
 
 
-
 def render_company_profile(ticker: str) -> None:
     """Zeigt verfügbare Basisdaten aus Yahoo, ohne Vollständigkeit zu behaupten."""
     try:
@@ -3549,20 +3106,6 @@ def sentiment_cell_style(value: Any) -> str:
     return "color: #475569; background-color: #f1f5f9"
 
 
-def _event_type_label(value: Any) -> str:
-    event_type = str(value or "news")
-    icon = {
-        "news": "📰",
-        "earnings": "📊",
-        "dividend": "💶",
-        "annual_meeting": "🗳️",
-        "report": "📄",
-        "analyst": "🎯",
-    }.get(event_type, "•")
-    label = EVENT_META.get(event_type, {}).get("label", event_type)
-    return f"{icon} {label}"
-
-
 def _friendly_event_date(value: Any) -> str:
     timestamp = pd.to_datetime(value, errors="coerce")
     if pd.isna(timestamp):
@@ -3570,117 +3113,6 @@ def _friendly_event_date(value: Any) -> str:
     if timestamp.hour == 0 and timestamp.minute == 0:
         return timestamp.strftime("%d.%m.%Y")
     return timestamp.strftime("%d.%m.%Y, %H:%M")
-
-
-def _render_event_table(frame: pd.DataFrame, empty_message: str) -> None:
-    if frame.empty:
-        st.info(empty_message)
-        return
-
-    display = frame.copy()
-    display["Datum"] = display["date"].map(_friendly_event_date)
-    display["Typ"] = display["event_type"].map(_event_type_label)
-    display["Titel"] = display.get("title", "").fillna("")
-    display["Quelle"] = display.get("source", "").fillna("")
-    display["Sentiment"] = display.get("sentiment_label", "neutral").map(sentiment_badge)
-    display["Sicherheit"] = display.get("sentiment_confidence", "niedrig").fillna("niedrig").astype(str).str.capitalize()
-    display["Begründung"] = display.get("sentiment_reason", "").fillna("")
-    display["Artikel"] = display.get("link", "").fillna("")
-
-    visible = ["Datum", "Typ", "Titel", "Quelle", "Sentiment", "Sicherheit", "Begründung", "Artikel"]
-    styled = display[visible].style.map(sentiment_cell_style, subset=["Sentiment"])
-    try:
-        st.dataframe(
-            styled,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Artikel": st.column_config.LinkColumn("Artikel", display_text="Öffnen"),
-                "Titel": st.column_config.TextColumn("Titel", width="large"),
-                "Begründung": st.column_config.TextColumn("Warum?", width="large"),
-            },
-        )
-    except (TypeError, AttributeError):
-        st.dataframe(styled, use_container_width=True, hide_index=True)
-
-
-def render_event_calendar(events: pd.DataFrame) -> None:
-    st.markdown("#### Ereigniskalender")
-    if events is None or events.empty:
-        st.info("Noch keine Ereignisse gespeichert. Aktualisiere im News-Tab eine Aktie.")
-        return
-
-    display = events.copy()
-    display["date"] = pd.to_datetime(display["date"], errors="coerce")
-    display = display.dropna(subset=["date"])
-    if display.empty:
-        st.info("Die gespeicherten Ereignisse enthalten keine gültigen Datumswerte.")
-        return
-
-    event_options = sorted(display["event_type"].dropna().astype(str).unique().tolist())
-    sentiment_options = ["positiv", "negativ", "gemischt", "neutral"]
-    filter_col1, filter_col2 = st.columns(2)
-    with filter_col1:
-        selected_types = st.multiselect(
-            "Ereignistypen",
-            options=event_options,
-            default=event_options,
-            format_func=lambda value: _event_type_label(value),
-            key="calendar_event_types",
-        )
-    with filter_col2:
-        selected_sentiments = st.multiselect(
-            "Sentiment",
-            options=sentiment_options,
-            default=sentiment_options,
-            format_func=sentiment_badge,
-            key="calendar_sentiments",
-        )
-
-    if selected_types:
-        display = display[display["event_type"].astype(str).isin(selected_types)]
-    else:
-        display = display.iloc[0:0]
-    if selected_sentiments:
-        display = display[display.get("sentiment_label", "neutral").fillna("neutral").astype(str).str.lower().isin(selected_sentiments)]
-    else:
-        display = display.iloc[0:0]
-
-    today = pd.Timestamp.now().normalize()
-    future_flags = display.get("is_future_event", False).astype(str).str.lower().isin({"true", "1", "yes", "ja"})
-    upcoming_mask = future_flags | (display["date"].dt.normalize() >= today)
-    upcoming = display[upcoming_mask].sort_values("date", ascending=True)
-    past = display[~upcoming_mask].sort_values("date", ascending=False)
-
-    counts = st.columns(4)
-    counts[0].metric("Kommende Termine", len(upcoming))
-    counts[1].metric("Positive Ereignisse", int((display.get("sentiment_label", "neutral").astype(str).str.lower() == "positiv").sum()))
-    counts[2].metric("Negative Ereignisse", int((display.get("sentiment_label", "neutral").astype(str).str.lower() == "negativ").sum()))
-    counts[3].metric("Gemischt/Neutral", int(display.get("sentiment_label", "neutral").astype(str).str.lower().isin(["gemischt", "neutral"]).sum()))
-
-    st.markdown("##### Kommende Termine")
-    _render_event_table(upcoming, "Keine kommenden Termine für die gewählten Filter.")
-
-    with st.expander(f"Vergangene Ereignisse ({len(past)})", expanded=upcoming.empty):
-        _render_event_table(past, "Keine vergangenen Ereignisse für die gewählten Filter.")
-
-    with st.expander("Wie werden Ereignistyp und Sentiment bestimmt?", expanded=False):
-        st.markdown(
-            """
-- **Ereignistyp** und **Sentiment** sind getrennt: Eine Quartalszahl oder Dividende ist zunächst neutral. Erst Formulierungen wie „Erwartungen übertroffen“, „Prognose angehoben“ oder „Dividende gekürzt“ erzeugen eine Richtung.
-- **Positiv**: u. a. Erwartungsübertreffen, Prognoseanhebung, Dividendenerhöhung, Aktienrückkauf, Analysten-Upgrade, Schuldenabbau.
-- **Negativ**: u. a. Gewinnwarnung, Prognosesenkung, Dividendenkürzung, Erwartungsverfehlung, Analysten-Downgrade, Klage/Untersuchung oder Insolvenz.
-- **Gemischt**: klare positive und negative Signale stehen gleichzeitig in Überschrift/Beschreibung, etwa „Erwartungen übertroffen, aber Prognose gesenkt“.
-- **Neutral**: kein eindeutiges Richtungssignal; ein bloßer Termin oder ein allgemeiner Analystenartikel bleibt neutral.
-
-Die Bewertung nutzt nur RSS-Überschrift und -Beschreibung. Ironie, komplexe Zusammenhänge und der vollständige Artikel können dadurch nicht sicher erfasst werden.
-            """
-        )
-
-
-
-
-
 
 
 def _weighted_portfolio_average(portfolio_view: pd.DataFrame, column: str) -> Optional[float]:
@@ -4184,9 +3616,6 @@ def render_portfolio_risk(portfolio_view: pd.DataFrame, histories: dict[str, pd.
     )
 
 
-
-
-
 # -----------------------------------------------------------------------------
 # Historisches Deep-Value-Backtesting 2.0
 # -----------------------------------------------------------------------------
@@ -4574,7 +4003,6 @@ def historical_bat_snapshot(
     return result
 
 
-
 def _future_value_trap_metrics(
     history: pd.DataFrame,
     dividends: pd.DataFrame,
@@ -4879,7 +4307,6 @@ def model_signal_equity_curve(signals: pd.DataFrame) -> pd.DataFrame:
             "Benchmark": benchmark_value,
         })
     return pd.DataFrame(rows)
-
 
 
 def deep_value_snapshot_coverage(snapshot: dict[str, Any]) -> tuple[int, int, float]:
@@ -5199,7 +4626,6 @@ def _save_research_case(record: dict[str, Any]) -> tuple[bool, str]:
     payload["bat_pattern_score"] = record.get("bat_pattern_score", record.get("deep_value_score"))
     updated = pd.concat([existing, pd.DataFrame([payload])], ignore_index=True)
     return safe_write_csv(updated[RESEARCH_CASE_COLUMNS], RESEARCH_CASES_PATH)
-
 
 
 # -----------------------------------------------------------------------------
@@ -6889,7 +6315,7 @@ def render_research(df: pd.DataFrame, histories: dict[str, pd.DataFrame], index_
     benchmark_metrics = compute_return_metrics(comparison["Benchmark"])
     table = pd.DataFrame(
         [
-            {"Serie": f"{df.loc[df["ticker_yahoo"] == ticker, "name"].iloc[0]} ({ticker})", "Rendite": company_metrics["return_pct"], "Volatilität": company_metrics["volatility_pct"], "Max. Drawdown": company_metrics["max_drawdown_pct"]},
+            {"Serie": f"{df.loc[df['ticker_yahoo'] == ticker, 'name'].iloc[0]} ({ticker})", "Rendite": company_metrics["return_pct"], "Volatilität": company_metrics["volatility_pct"], "Max. Drawdown": company_metrics["max_drawdown_pct"]},
             {"Serie": benchmark_ticker, "Rendite": benchmark_metrics["return_pct"], "Volatilität": benchmark_metrics["volatility_pct"], "Max. Drawdown": benchmark_metrics["max_drawdown_pct"]},
         ]
     )
@@ -7221,7 +6647,6 @@ def render_data_status(summary: dict[str, Any], detail: pd.DataFrame, metrics: p
             "Der Datenstatus trennt deshalb klar zwischen Indexbestandteil, Kursdaten, Fundamentaldaten, Dividenden, "
             "Cashflow und Deep-Value-Kennzahlen. Wenn ein Wert nicht im Scanner auftaucht, findest du hier meistens den Grund."
         )
-
 
 
 def _score_label(value: Any) -> str:
@@ -8488,7 +7913,6 @@ def render_risk_and_chart(df: pd.DataFrame, histories: dict[str, pd.DataFrame]) 
     st.caption("*Gesamtrendite und bereinigter Kurs: Yahoo Adj Close als Näherung, nicht als Broker- oder Steuerberechnung.")
 
 
-
 def _extract_sector_from_chart_event(event: Any, selection_name: str) -> Optional[str]:
     """Liest eine Sektor-Auswahl robust aus einem Streamlit-/Altair-Event."""
     if event is None:
@@ -8992,7 +8416,6 @@ def render_news_summary(
         st.markdown(f"- {note}")
 
     return active_sentiment_filter
-
 
 
 # -----------------------------------------------------------------------------
@@ -10517,7 +9940,6 @@ def render_watchlist(
         st.rerun()
 
 
-
 # -----------------------------------------------------------------------------
 # Deep Company Profiles (V5.7)
 # -----------------------------------------------------------------------------
@@ -11268,7 +10690,6 @@ def render_deep_company_profiles(data: pd.DataFrame) -> None:
             "Die Dateien werden beim ersten Speichern automatisch angelegt. Für eine spätere Monetarisierung "
             "kann dieser manuell gepflegte Research-Bereich als Pro-Funktion in eine Datenbank übertragen werden."
         )
-
 
 
 # -----------------------------------------------------------------------------
@@ -12124,283 +11545,4 @@ def render_superinvestors(data: pd.DataFrame) -> None:
         ])
         st.dataframe(quality, hide_index=True, use_container_width=True)
 
-def main() -> None:
-    st.set_page_config(page_title=APP_TITLE, page_icon="📈", layout="wide")
-    with st.sidebar:
-        render_language_selector()
-    language = current_language()
-    show_header()
 
-    # ----- Sidebar: Daten, Filter und Scanner-Parameter -----
-    with st.sidebar:
-        st.header(t("sidebar.title", language))
-        st.caption(t("sidebar.provider", language, provider=MARKET_PROVIDER.name))
-        index_name = st.selectbox(t("sidebar.index", language), INDEX_OPTIONS, key="index_name")
-        st.caption(t("sidebar.index_hint", language))
-
-        try:
-            constituents = load_index_constituents(index_name)
-            st.success(
-                t("sidebar.index_loaded", language, index=index_name, count=len(constituents)),
-                icon="✅",
-            )
-            st.caption(
-                t(
-                    "sidebar.index_source",
-                    language,
-                    source=index_source_description(index_name),
-                )
-            )
-        except Exception as error:
-            st.error(t("sidebar.index_error", language, error=error))
-            st.stop()
-
-        all_sector_value = "__all__"
-        sector_options = [all_sector_value] + sorted(
-            constituents["sector"].dropna().astype(str).unique().tolist()
-        )
-        selected_sector = st.selectbox(
-            t("sidebar.sector", language),
-            sector_options,
-            format_func=lambda value: t("sidebar.all", language)
-            if value == all_sector_value
-            else value,
-        )
-        query = st.text_input(t("sidebar.search", language)).strip()
-
-        filtered_constituents = constituents.copy()
-        if selected_sector != all_sector_value:
-            filtered_constituents = filtered_constituents[filtered_constituents["sector"] == selected_sector]
-        if query:
-            mask = (
-                filtered_constituents["name"].astype(str).str.contains(query, case=False, na=False)
-                | filtered_constituents["ticker_yahoo"].astype(str).str.contains(query, case=False, na=False)
-            )
-            filtered_constituents = filtered_constituents[mask]
-
-        maximum = len(filtered_constituents)
-        if maximum <= 0:
-            st.error(t("sidebar.no_companies", language))
-            st.stop()
-        default_count = min(40, maximum)
-        slider_step = 1 if maximum <= 150 else 10
-        max_stocks = st.slider(
-            t("sidebar.max_companies", language),
-            min_value=1,
-            max_value=maximum,
-            value=default_count,
-            step=slider_step,
-            help=t("sidebar.max_companies_help", language),
-        )
-
-        st.divider()
-        st.header(t("sidebar.scanner_profile", language))
-        profile_name = st.selectbox(t("sidebar.profile", language), list(STRATEGY_PROFILES), key="strategy_profile")
-        profile = STRATEGY_PROFILES[profile_name]
-
-        # Presets werden nur bei einem Profilwechsel gesetzt, danach bleiben die
-        # Slider frei einstellbar.
-        if st.session_state.get("_applied_strategy_profile") != profile_name:
-            st.session_state["scanner_drawdown"] = int(profile["drawdown"])
-            st.session_state["scanner_payout"] = int(profile["payout"])
-            st.session_state["scanner_score"] = int(profile["score"])
-            st.session_state["scanner_yield"] = float(profile["yield"])
-            st.session_state["_applied_strategy_profile"] = profile_name
-
-        st.caption(profile["description"])
-        drawdown_trigger = st.slider(
-            t("sidebar.drawdown", language),
-            min_value=10,
-            max_value=60,
-            step=5,
-            key="scanner_drawdown",
-        )
-        payout_max = st.slider(
-            t("sidebar.payout", language),
-            min_value=40,
-            max_value=120,
-            step=5,
-            key="scanner_payout",
-        )
-        score_min = st.slider(
-            t("sidebar.quality", language),
-            min_value=0,
-            max_value=100,
-            step=5,
-            key="scanner_score",
-        )
-        yield_min = st.slider(
-            t("sidebar.yield", language),
-            min_value=1.0,
-            max_value=10.0,
-            step=0.5,
-            key="scanner_yield",
-        )
-
-        st.divider()
-        reload_clicked = st.button(t("sidebar.load", language), type="primary", use_container_width=True)
-        if st.button(t("sidebar.clear_cache", language), use_container_width=True):
-            load_index_constituents.clear()
-            download_price_histories.clear()
-            fetch_ticker_info.clear()
-            fetch_dividends.clear()
-            fetch_news_for_ticker.clear()
-            fetch_news_bundle.clear()
-            fetch_yahoo_calendar_events.clear()
-            fetch_sec_company_map.clear()
-            fetch_sec_filings_events.clear()
-            fetch_registered_ir_events.clear()
-            fetch_benchmark_history.clear()
-            fetch_long_history.clear()
-            fetch_historical_financials.clear()
-            fetch_13f_filing_list.clear()
-            fetch_13f_holdings.clear()
-            fx_to_eur.clear()
-            for state_key in [
-                "metrics_raw", "histories", "loaded_tickers", "portfolio_extra_metrics",
-                "portfolio_extra_histories", "watchlist_extra_raw_metrics",
-                "watchlist_extra_histories", "watchlist_load_errors", "watchlist_last_refresh",
-            ]:
-                st.session_state.pop(state_key, None)
-            st.success(t("sidebar.cache_cleared", language))
-            st.rerun()
-
-    selected_constituents = filtered_constituents.head(max_stocks).reset_index(drop=True)
-    selected_tickers = tuple(selected_constituents["ticker_yahoo"].map(clean_ticker))
-
-    # Rohdaten sind unabhängig vom Profil und den Sliderwerten. Der Score wird
-    # bei jeder UI-Änderung erneut berechnet, ohne externe Daten erneut zu laden.
-    loaded_tickers = tuple(st.session_state.get("loaded_tickers", ()))
-    if reload_clicked or loaded_tickers != selected_tickers:
-        with st.spinner(t("loading.companies", language, count=len(selected_constituents))):
-            raw_metrics, histories, errors = collect_metrics(selected_constituents)
-        st.session_state["metrics_raw"] = raw_metrics
-        st.session_state["histories"] = histories
-        st.session_state["loaded_tickers"] = selected_tickers
-        st.session_state["load_errors"] = errors
-        st.session_state["selected_constituents_snapshot"] = selected_constituents.copy()
-        st.session_state["last_refresh"] = datetime.now().strftime("%d.%m.%Y %H:%M")
-        if errors:
-            st.warning(t("loading.partial", language, errors=" | ".join(errors[:8])))
-
-    raw_metrics = st.session_state.get("metrics_raw")
-    histories = st.session_state.get("histories", {})
-    if raw_metrics is None or raw_metrics.empty:
-        st.info(t("loading.prompt", language))
-        st.stop()
-
-    data = enrich_with_scores(
-        raw_metrics,
-        drawdown_trigger=float(drawdown_trigger),
-        payout_max=float(payout_max),
-        score_min=float(score_min),
-        yield_min=float(yield_min),
-    )
-    data = enrich_with_special_situations(data)
-
-    load_errors = st.session_state.get("load_errors", [])
-    selected_snapshot = st.session_state.get("selected_constituents_snapshot", selected_constituents)
-    status_summary, status_detail = build_data_status(
-        selected_snapshot, data, histories, load_errors, index_name=index_name
-    )
-
-    last_refresh = st.session_state.get("last_refresh", "–")
-    requested_count = int(status_summary.get("angefragt", len(selected_snapshot)))
-    loaded_count = int(status_summary.get("analysiert", len(data)))
-    coverage = safe_float(status_summary.get("abdeckung_prozent"))
-    coverage_label = format_percent(coverage, 1) if coverage is not None else "–"
-    st.caption(
-        t(
-            "status.summary",
-            language,
-            timestamp=last_refresh,
-            loaded=loaded_count,
-            requested=requested_count,
-            coverage=coverage_label,
-            profile=profile_name,
-            currency=BASE_CURRENCY,
-        )
-    )
-
-    # Persistente, sprachunabhängige Navigation. Im Session State werden stabile
-    # Seiten-IDs statt sichtbarer Labels gespeichert.
-    active_page = render_main_navigation()
-    st.divider()
-
-    if active_page == "overview":
-        render_overview(data)
-    elif active_page == "data_status":
-        render_data_status(status_summary, status_detail, data)
-    elif active_page == "fundamentals":
-        render_fundamentals(data)
-    elif active_page == "stock_profiles":
-        render_profile_scores(data)
-    elif active_page == "analysis":
-        render_risk_and_chart(data, histories)
-    elif active_page == "sectors":
-        render_sector_view(data, histories)
-    elif active_page == "news":
-        render_news(data, histories, index_name)
-    elif active_page == "sources":
-        render_source_monitor(
-            data,
-            global_news_sources=GLOBAL_RSS_SOURCES,
-            headers=DEFAULT_HEADERS,
-            manual_events_path=MANUAL_EVENTS_PATH,
-            ir_sources_path=IR_SOURCES_PATH,
-        )
-    elif active_page == "portfolio":
-        render_portfolio(data, histories)
-    elif active_page == "portfolio_sim":
-        holdings, _, warnings = portfolio_input()
-        for warning in warnings:
-            st.warning(warning)
-        render_portfolio_simulation(
-            data,
-            histories,
-            holdings,
-            transactions_path=TRANSACTIONS_PATH,
-            market_provider=MARKET_PROVIDER,
-            fx_provider=FX_PROVIDER,
-            base_currency=BASE_CURRENCY,
-        )
-    elif active_page == "scenarios":
-        render_scenario_engine(data)
-    elif active_page == "ai_lab":
-        render_ai_lab(data, market_provider=MARKET_PROVIDER, storage_dir=AI_LAB_DIR)
-    elif active_page == "watchlist":
-        render_watchlist(
-            data,
-            drawdown_trigger=float(drawdown_trigger),
-            payout_max=float(payout_max),
-            score_min=float(score_min),
-            yield_min=float(yield_min),
-        )
-    elif active_page == "value_scanner":
-        render_value_watchlist(
-            data,
-            drawdown_trigger=float(drawdown_trigger),
-            payout_max=float(payout_max),
-            score_min=float(score_min),
-            yield_min=float(yield_min),
-            profile_name=profile_name,
-        )
-    elif active_page == "deep_value":
-        render_special_situation_scanner(data)
-    elif active_page == "backtesting":
-        render_bat_backtesting(data, index_name)
-    elif active_page == "patterns":
-        render_universe_pattern_comparison(data, index_name)
-    elif active_page == "learning":
-        render_learning_module(data)
-    elif active_page == "company_profiles":
-        render_deep_company_profiles(data)
-    elif active_page == "superinvestors":
-        render_superinvestors(data)
-    elif active_page == "research":
-        render_research(data, histories, index_name)
-
-
-
-if __name__ == "__main__":
-    main()

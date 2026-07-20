@@ -10,14 +10,21 @@ from .app_shell import (
     render_language_selector,
     render_main_navigation,
 )
+from .company_select import company_selectbox
 from .news_intelligence import render_news_intelligence
+from .page_router import UnknownPageError, dispatch_page
 from .portfolio_simulation import render_portfolio_simulation
 from .profile_automation import render_profile_automation
 from .scenarios import render_scenario_engine
+from .sidebar import SidebarCallbacks, render_sidebar
 from .source_monitor import render_source_monitor
 
 __all__ = [
     "MAIN_NAVIGATION",
+    "SidebarCallbacks",
+    "UnknownPageError",
+    "company_selectbox",
+    "dispatch_page",
     "legacy_page_label",
     "normalize_page_id",
     "render_annual_report_automation",
@@ -29,5 +36,6 @@ __all__ = [
     "render_profile_automation",
     "render_scenario_engine",
     "render_source_monitor",
+    "render_sidebar",
     "render_ai_lab",
 ]
