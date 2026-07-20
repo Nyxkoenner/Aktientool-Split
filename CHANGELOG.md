@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.4.0
+
+- Zentrale Deutsch-/Englisch-Umschaltung über die Sidebar.
+- Vollständiger Übersetzungskatalog mit automatischer Fallback-Logik.
+- Sprachabhängige Zahlen-, Prozent-, Währungs- und Datumsformatierung.
+- Hauptnavigation verwendet stabile Seiten-IDs statt sichtbarer Labels.
+- App-Kopf und zentrale Sidebar lokalisiert.
+- Szenario-Engine, Portfolio-Simulation, Datenquellen-Monitor und Profilautomatisierung vollständig lokalisiert.
+- Neuer modularer App-Rahmen in `ui/app_shell.py`.
+- Mypy-Prüfung auf `i18n` und `ui` erweitert.
+- Fünf zusätzliche Tests für Übersetzungskatalog, Formatierung und Navigation.
+
 ## 6.3.0
 
 - Firmenzuordnung, News-Relevanz, Sentiment und Ereignisklassifikation in `domain/news_analysis.py` ausgelagert.

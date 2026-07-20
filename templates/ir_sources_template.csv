@@ -1,0 +1,2 @@
+ticker_yahoo,source_name,source_type,feed_url,source_url,verification_level,enabled,notes
+SAP.DE,SAP Investor Relations,web,,https://www.sap.com/investors,official_ir,true,Referenzlink; RSS- oder ICS-Link ergänzen wenn verfügbar

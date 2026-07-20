@@ -48,7 +48,12 @@ from stock_explorer.providers.registry import (
     get_profile_service,
     get_sec_provider,
 )
+from stock_explorer.i18n import current_language, t
 from stock_explorer.ui import (
+    normalize_page_id,
+    render_header,
+    render_language_selector,
+    render_main_navigation,
     render_portfolio_simulation,
     render_profile_automation,
     render_scenario_engine,
@@ -66,7 +71,7 @@ SEC_EVENT_PROVIDER = SecFilingEventProvider(SEC_PROVIDER)
 # App-Konfiguration
 # -----------------------------------------------------------------------------
 
-APP_VERSION = "6.3.0"
+APP_VERSION = "6.4.0"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 
@@ -7115,11 +7120,7 @@ def overview_styler(df: pd.DataFrame) -> Any:
 
 
 def show_header() -> None:
-    st.title("Aktien Explorer")
-    st.caption(
-        f"Version {APP_VERSION} · Fundamentaldaten, Score-Profile, News & Events, Portfolio-Risiko und Research. "
-        "Keine Anlageberatung – Daten, Quellen und Annahmen vor Entscheidungen immer selbst prüfen."
-    )
+    render_header(APP_VERSION)
 
 
 def render_data_status(summary: dict[str, Any], detail: pd.DataFrame, metrics: pd.DataFrame) -> None:
@@ -8514,11 +8515,12 @@ def _extract_sector_from_chart_event(event: Any, selection_name: str) -> Optiona
 def _navigate_to_company(page: str, ticker: str) -> None:
     """Wechselt per Widget-Callback sicher auf eine firmenspezifische Ansicht."""
     ticker = str(ticker)
-    if page == "Einzelanalyse":
+    page_id = normalize_page_id(page)
+    if page_id == "analysis":
         st.session_state["analysis_ticker"] = ticker
-    elif page == "News & Events":
+    elif page_id == "news":
         st.session_state["news_ticker"] = ticker
-    st.session_state["main_navigation"] = page
+    st.session_state["main_navigation"] = page_id
 
 
 def _render_sector_company_drilldown(df: pd.DataFrame, selected_sector: str) -> None:
@@ -12080,35 +12082,50 @@ def render_superinvestors(data: pd.DataFrame) -> None:
 
 def main() -> None:
     st.set_page_config(page_title=APP_TITLE, page_icon="📈", layout="wide")
+    with st.sidebar:
+        render_language_selector()
+    language = current_language()
     show_header()
 
     # ----- Sidebar: Daten, Filter und Scanner-Parameter -----
     with st.sidebar:
-        st.header("Analyse-Einstellungen")
-        st.caption(f"Marktdatenanbieter: {MARKET_PROVIDER.name}")
-        index_name = st.selectbox("Index", INDEX_OPTIONS, key="index_name")
-        st.caption(
-            "DAX, MDAX und SDAX werden offline aus integrierten Listen geladen. "
-            "Eigene CSVs unter data/indices/ überschreiben die Vorlage."
-        )
+        st.header(t("sidebar.title", language))
+        st.caption(t("sidebar.provider", language, provider=MARKET_PROVIDER.name))
+        index_name = st.selectbox(t("sidebar.index", language), INDEX_OPTIONS, key="index_name")
+        st.caption(t("sidebar.index_hint", language))
 
         try:
             constituents = load_index_constituents(index_name)
             st.success(
-                f"{index_name}: {len(constituents)} Unternehmen geladen",
+                t("sidebar.index_loaded", language, index=index_name, count=len(constituents)),
                 icon="✅",
             )
-            st.caption(f"Indexquelle: {index_source_description(index_name)}")
+            st.caption(
+                t(
+                    "sidebar.index_source",
+                    language,
+                    source=index_source_description(index_name),
+                )
+            )
         except Exception as error:
-            st.error(f"Index konnte nicht geladen werden: {error}")
+            st.error(t("sidebar.index_error", language, error=error))
             st.stop()
 
-        sector_options = ["Alle"] + sorted(constituents["sector"].dropna().astype(str).unique().tolist())
-        selected_sector = st.selectbox("Sektor", sector_options)
-        query = st.text_input("Name oder Ticker suchen").strip()
+        all_sector_value = "__all__"
+        sector_options = [all_sector_value] + sorted(
+            constituents["sector"].dropna().astype(str).unique().tolist()
+        )
+        selected_sector = st.selectbox(
+            t("sidebar.sector", language),
+            sector_options,
+            format_func=lambda value: t("sidebar.all", language)
+            if value == all_sector_value
+            else value,
+        )
+        query = st.text_input(t("sidebar.search", language)).strip()
 
         filtered_constituents = constituents.copy()
-        if selected_sector != "Alle":
+        if selected_sector != all_sector_value:
             filtered_constituents = filtered_constituents[filtered_constituents["sector"] == selected_sector]
         if query:
             mask = (
@@ -12119,22 +12136,22 @@ def main() -> None:
 
         maximum = len(filtered_constituents)
         if maximum <= 0:
-            st.error("Der Filter enthält keine Unternehmen.")
+            st.error(t("sidebar.no_companies", language))
             st.stop()
         default_count = min(40, maximum)
         slider_step = 1 if maximum <= 150 else 10
         max_stocks = st.slider(
-            "Max. Unternehmen laden",
+            t("sidebar.max_companies", language),
             min_value=1,
             max_value=maximum,
             value=default_count,
             step=slider_step,
-            help="Mehr Unternehmen bedeuten deutlich längere Ladezeiten, weil viele Fundamentaldaten einzeln abgefragt werden.",
+            help=t("sidebar.max_companies_help", language),
         )
 
         st.divider()
-        st.header("Scanner-Profil")
-        profile_name = st.selectbox("Profil", list(STRATEGY_PROFILES), key="strategy_profile")
+        st.header(t("sidebar.scanner_profile", language))
+        profile_name = st.selectbox(t("sidebar.profile", language), list(STRATEGY_PROFILES), key="strategy_profile")
         profile = STRATEGY_PROFILES[profile_name]
 
         # Presets werden nur bei einem Profilwechsel gesetzt, danach bleiben die
@@ -12148,28 +12165,28 @@ def main() -> None:
 
         st.caption(profile["description"])
         drawdown_trigger = st.slider(
-            "Min. Drawdown vom 52W-Hoch",
+            t("sidebar.drawdown", language),
             min_value=10,
             max_value=60,
             step=5,
             key="scanner_drawdown",
         )
         payout_max = st.slider(
-            "Max. Payout Ratio",
+            t("sidebar.payout", language),
             min_value=40,
             max_value=120,
             step=5,
             key="scanner_payout",
         )
         score_min = st.slider(
-            "Min. Qualitäts-Score",
+            t("sidebar.quality", language),
             min_value=0,
             max_value=100,
             step=5,
             key="scanner_score",
         )
         yield_min = st.slider(
-            "Min. Dividendenrendite",
+            t("sidebar.yield", language),
             min_value=1.0,
             max_value=10.0,
             step=0.5,
@@ -12177,8 +12194,8 @@ def main() -> None:
         )
 
         st.divider()
-        reload_clicked = st.button("Daten laden / aktualisieren", type="primary", use_container_width=True)
-        if st.button("Zwischenspeicher leeren", use_container_width=True):
+        reload_clicked = st.button(t("sidebar.load", language), type="primary", use_container_width=True)
+        if st.button(t("sidebar.clear_cache", language), use_container_width=True):
             load_index_constituents.clear()
             download_price_histories.clear()
             fetch_ticker_info.clear()
@@ -12201,7 +12218,7 @@ def main() -> None:
                 "watchlist_extra_histories", "watchlist_load_errors", "watchlist_last_refresh",
             ]:
                 st.session_state.pop(state_key, None)
-            st.success("Zwischenspeicher wurde geleert.")
+            st.success(t("sidebar.cache_cleared", language))
             st.rerun()
 
     selected_constituents = filtered_constituents.head(max_stocks).reset_index(drop=True)
@@ -12211,7 +12228,7 @@ def main() -> None:
     # bei jeder UI-Änderung erneut berechnet, ohne externe Daten erneut zu laden.
     loaded_tickers = tuple(st.session_state.get("loaded_tickers", ()))
     if reload_clicked or loaded_tickers != selected_tickers:
-        with st.spinner(f"Lade Daten für {len(selected_constituents)} Unternehmen …"):
+        with st.spinner(t("loading.companies", language, count=len(selected_constituents))):
             raw_metrics, histories, errors = collect_metrics(selected_constituents)
         st.session_state["metrics_raw"] = raw_metrics
         st.session_state["histories"] = histories
@@ -12220,12 +12237,12 @@ def main() -> None:
         st.session_state["selected_constituents_snapshot"] = selected_constituents.copy()
         st.session_state["last_refresh"] = datetime.now().strftime("%d.%m.%Y %H:%M")
         if errors:
-            st.warning("Einige Daten konnten nicht vollständig geladen werden: " + " | ".join(errors[:8]))
+            st.warning(t("loading.partial", language, errors=" | ".join(errors[:8])))
 
     raw_metrics = st.session_state.get("metrics_raw")
     histories = st.session_state.get("histories", {})
     if raw_metrics is None or raw_metrics.empty:
-        st.info("Wähle links einen Index und klicke auf „Daten laden / aktualisieren“. ")
+        st.info(t("loading.prompt", language))
         st.stop()
 
     data = enrich_with_scores(
@@ -12249,43 +12266,38 @@ def main() -> None:
     coverage = safe_float(status_summary.get("abdeckung_prozent"))
     coverage_label = format_percent(coverage, 1) if coverage is not None else "–"
     st.caption(
-        f"Aktualisiert: {last_refresh} · {loaded_count}/{requested_count} Unternehmen analysiert "
-        f"({coverage_label} Abdeckung) · Profil: {profile_name} · Portfolio-Basiswährung: {BASE_CURRENCY}"
+        t(
+            "status.summary",
+            language,
+            timestamp=last_refresh,
+            loaded=loaded_count,
+            requested=requested_count,
+            coverage=coverage_label,
+            profile=profile_name,
+            currency=BASE_CURRENCY,
+        )
     )
 
-    # Persistente Hauptnavigation: Anders als st.tabs bleibt diese Auswahl bei jedem
-    # Streamlit-Rerun erhalten, zum Beispiel nach dem Aktualisieren der News.
-    main_pages = [
-        "Überblick", "Datenstatus", "Fundamentaldaten", "Aktienprofile", "Einzelanalyse", "Sektoren",
-        "News & Events", "Datenquellen", "Portfolio", "Portfolio-Simulation", "Szenarien", "Watchlist", "Value-Scanner", "Deep Value", "Backtesting", "Mustervergleich", "Lernmodul", "Unternehmensprofile", "Superinvestoren", "Research",
-    ]
-    if st.session_state.get("main_navigation") not in main_pages:
-        st.session_state["main_navigation"] = main_pages[0]
-
-    active_page = st.radio(
-        "Bereich auswählen",
-        options=main_pages,
-        horizontal=True,
-        key="main_navigation",
-        label_visibility="collapsed",
-    )
+    # Persistente, sprachunabhängige Navigation. Im Session State werden stabile
+    # Seiten-IDs statt sichtbarer Labels gespeichert.
+    active_page = render_main_navigation()
     st.divider()
 
-    if active_page == "Überblick":
+    if active_page == "overview":
         render_overview(data)
-    elif active_page == "Datenstatus":
+    elif active_page == "data_status":
         render_data_status(status_summary, status_detail, data)
-    elif active_page == "Fundamentaldaten":
+    elif active_page == "fundamentals":
         render_fundamentals(data)
-    elif active_page == "Aktienprofile":
+    elif active_page == "stock_profiles":
         render_profile_scores(data)
-    elif active_page == "Einzelanalyse":
+    elif active_page == "analysis":
         render_risk_and_chart(data, histories)
-    elif active_page == "Sektoren":
+    elif active_page == "sectors":
         render_sector_view(data, histories)
-    elif active_page == "News & Events":
+    elif active_page == "news":
         render_news(data)
-    elif active_page == "Datenquellen":
+    elif active_page == "sources":
         render_source_monitor(
             data,
             global_news_sources=GLOBAL_RSS_SOURCES,
@@ -12293,16 +12305,16 @@ def main() -> None:
             manual_events_path=MANUAL_EVENTS_PATH,
             ir_sources_path=IR_SOURCES_PATH,
         )
-    elif active_page == "Portfolio":
+    elif active_page == "portfolio":
         render_portfolio(data, histories)
-    elif active_page == "Portfolio-Simulation":
+    elif active_page == "portfolio_sim":
         holdings, _, warnings = portfolio_input()
         for warning in warnings:
             st.warning(warning)
         render_portfolio_simulation(data, histories, holdings)
-    elif active_page == "Szenarien":
+    elif active_page == "scenarios":
         render_scenario_engine(data)
-    elif active_page == "Watchlist":
+    elif active_page == "watchlist":
         render_watchlist(
             data,
             drawdown_trigger=float(drawdown_trigger),
@@ -12310,7 +12322,7 @@ def main() -> None:
             score_min=float(score_min),
             yield_min=float(yield_min),
         )
-    elif active_page == "Value-Scanner":
+    elif active_page == "value_scanner":
         render_value_watchlist(
             data,
             drawdown_trigger=float(drawdown_trigger),
@@ -12319,19 +12331,19 @@ def main() -> None:
             yield_min=float(yield_min),
             profile_name=profile_name,
         )
-    elif active_page == "Deep Value":
+    elif active_page == "deep_value":
         render_special_situation_scanner(data)
-    elif active_page == "Backtesting":
+    elif active_page == "backtesting":
         render_bat_backtesting(data, index_name)
-    elif active_page == "Mustervergleich":
+    elif active_page == "patterns":
         render_universe_pattern_comparison(data, index_name)
-    elif active_page == "Lernmodul":
+    elif active_page == "learning":
         render_learning_module(data)
-    elif active_page == "Unternehmensprofile":
+    elif active_page == "company_profiles":
         render_deep_company_profiles(data)
-    elif active_page == "Superinvestoren":
+    elif active_page == "superinvestors":
         render_superinvestors(data)
-    elif active_page == "Research":
+    elif active_page == "research":
         render_research(data, histories, index_name)
 
 

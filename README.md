@@ -1,9 +1,8 @@
-# Aktien Explorer V6.3
+# Aktien Explorer V6.4
 
-V6.3 bindet die modularen News-, Event- und Profilanbieter vollständig in die
-Oberfläche ein. Firmenzuordnung, Sentiment, Ereignisklassifikation und
-Quellenpriorisierung liegen nicht mehr ausschließlich in der großen
-`legacy_app.py`.
+V6.4 führt eine zentrale Deutsch-/Englisch-Umschaltung ein und lagert den
+App-Rahmen sowie die sprachunabhängige Navigation aus der großen
+`legacy_app.py` aus.
 
 ## Installation
 
@@ -14,79 +13,54 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-## Neue Module
+## Sprache umschalten
+
+Die Sprache wird oben in der Sidebar ausgewählt und bleibt bei Streamlit-Reruns
+erhalten. Unterstützt werden aktuell:
+
+- Deutsch (`de`)
+- English (`en`)
+
+Optional kann die Standardsprache gesetzt werden:
+
+```powershell
+$env:AKTIEN_EXPLORER_LANGUAGE="en"
+python -m streamlit run app.py
+```
+
+## Neue Struktur
 
 ```text
 stock_explorer/
-├── domain/
-│   ├── event_resolution.py
-│   └── news_analysis.py
-├── providers/
-│   ├── ir.py
-│   └── sec_companyfacts.py
-├── services/
-│   └── source_health.py
+├── i18n/
+│   ├── context.py
+│   ├── formatting.py
+│   ├── navigation.py
+│   └── translations.py
 └── ui/
-    ├── profile_automation.py
-    └── source_monitor.py
+    └── app_shell.py
 ```
 
-## Datenquellen-Monitor
+## Bereits vollständig lokalisiert
 
-Der neue Hauptbereich **Datenquellen** prüft für ein ausgewähltes Unternehmen:
+- App-Kopf und Hauptnavigation
+- zentrale Sidebar-Einstellungen
+- Datenquellen-Monitor
+- Szenario-Engine
+- Portfolio-Simulation
+- automatische Profilanreicherung
+- zentrale Zahlen- und Datumsformatierung der neuen Module
 
-- globale RSS- und Google-News-Quellen,
-- Yahoo-, SEC-, manuelle und Unternehmens-IR-Ereignisse,
-- Yahoo- und SEC-Profilanreicherung,
-- HTTP-Status, Treffer, Laufzeit und Quellen-Gesundheit.
+Die älteren, noch nicht aus `legacy_app.py` ausgelagerten Detailansichten bleiben
+vorübergehend teilweise deutsch. Das Übersetzungssystem ist so aufgebaut, dass
+diese Bereiche in den nächsten Auslagerungsschritten ohne erneute Architekturänderung
+umgestellt werden können.
 
-## Offizielle IR-Quellen
+## Stabile Navigation
 
-Die Datei `data/ir_sources.csv` unterstützt diese Spalten:
-
-```csv
-ticker_yahoo,source_name,source_type,feed_url,source_url,verification_level,enabled,notes
-```
-
-Mögliche `source_type`-Werte:
-
-- `rss` oder `atom`
-- `ics`
-- `web` als reiner Referenzlink
-
-Beispiel:
-
-```csv
-SAP.DE,SAP Investor Relations,ics,https://example.com/calendar.ics,https://www.sap.com/investors,official_ir,true,
-```
-
-## Automatische Unternehmensprofile
-
-Für SEC-gemappte US-Ticker ohne Börsensuffix ergänzt V6.3 offizielle Company
-Facts, unter anderem:
-
-- Umsatz,
-- Nettoergebnis,
-- operativen Cashflow,
-- Investitionen,
-- Free Cashflow,
-- Vermögen und Verbindlichkeiten,
-- Finanzschulden,
-- gezahlte Dividenden.
-
-Für deutsche und viele andere Nicht-US-Listings bleibt Yahoo die automatische
-Quelle; Segmente, Regionen und qualitative Angaben können weiterhin lokal
-gepflegt werden.
-
-## Provider konfigurieren
-
-```powershell
-$env:AKTIEN_EXPLORER_MARKET_PROVIDER="yahoo"
-$env:AKTIEN_EXPLORER_FX_PROVIDER="yahoo"
-$env:AKTIEN_EXPLORER_PROFILE_PROVIDER="yahoo_sec"
-$env:AKTIEN_EXPLORER_SEC_PROVIDER="sec_edgar"
-$env:SEC_CONTACT_EMAIL="deine-email@example.com"
-```
+Im Session State werden keine sichtbaren deutschen oder englischen Labels mehr
+gespeichert, sondern stabile Seiten-IDs wie `analysis`, `news` oder `scenarios`.
+Dadurch bleibt der aktive Bereich auch beim Sprachwechsel und bei Reruns erhalten.
 
 ## Qualitätssicherung
 
@@ -94,4 +68,5 @@ $env:SEC_CONTACT_EMAIL="deine-email@example.com"
 .\scripts\check.ps1
 ```
 
-Der aktuelle Prüflauf umfasst 24 Tests sowie Ruff, Mypy und Syntaxprüfung.
+Der Prüflauf umfasst 29 Tests sowie Ruff, Mypy und Syntaxprüfung. Mypy prüft nun
+zusätzlich die Pakete `stock_explorer/i18n` und `stock_explorer/ui`.
