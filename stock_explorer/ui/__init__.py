@@ -1,5 +1,6 @@
 """Streamlit-Oberflächenmodule des Aktien Explorers."""
 
+from .annual_report_automation import render_annual_report_automation
 from .app_shell import (
     MAIN_NAVIGATION,
     legacy_page_label,
@@ -17,6 +18,7 @@ __all__ = [
     "MAIN_NAVIGATION",
     "legacy_page_label",
     "normalize_page_id",
+    "render_annual_report_automation",
     "render_header",
     "render_language_selector",
     "render_main_navigation",

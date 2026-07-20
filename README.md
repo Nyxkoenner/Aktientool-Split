@@ -1,4 +1,4 @@
-# Aktien Explorer V6.5
+# Aktien Explorer V6.7
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
@@ -86,3 +86,23 @@ Der Prüflauf umfasst 34 Tests sowie Ruff, Mypy und Syntaxprüfung.
 Ab Version 6.6 enthält der Bereich **Szenarien** sektorspezifische Stressmodelle. Die Engine unterscheidet unter anderem Banken, Versicherungen, Immobilien, Technologie, Industrie, Versorger und Energie. Vorgefertigte Szenarien verändern Wachstum, Marge, Finanzierung, Bewertung, Dividende und Währungseffekte transparent.
 
 Die Ausgabe zeigt eine schwache, mittlere und starke Modellbandbreite. Zusätzlich wird die modellhafte Gesamtrendite mit rollierenden historischen Haltedauerrenditen derselben Aktie verglichen. Diese Einordnung ist eine Research-Hilfe und weder Kursziel noch Renditeprognose.
+
+## Geschäftsbericht-Automatisierung
+
+Im Bereich **Unternehmensprofile → Automatische Anreicherung** können nun
+textbasierte PDF-, HTML- oder TXT-Berichte hochgeladen und analysiert werden.
+Für SEC-gemappte US-Ticker und ADRs kann alternativ der neueste 10-K-, 20-F-
+oder 40-F-Bericht direkt aus EDGAR geladen werden.
+
+Die Analyse erkennt heuristisch:
+
+- Geschäftsmodell und relevante Berichtsteile
+- wesentliche Risiken, Chancen und Abhängigkeiten
+- mögliche Marken und Tochtergesellschaften
+- Kandidaten für Geschäftssegmente und Regionen
+- Umsatzanteile und Beträge, soweit sie im extrahierten Text eindeutig vorkommen
+
+Kandidaten müssen vor dem Speichern manuell bestätigt werden. Analyse-Snapshots
+werden lokal unter `data/company_documents/` gespeichert. Gescannte PDFs benötigen
+vor dem Import OCR; die App führt selbst keine OCR aus. Die Ergebnisse ersetzen
+keine Prüfung des Originalberichts.

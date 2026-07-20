@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.7.0
+
+- Automatischer Import textbasierter PDF-, HTML- und TXT-Geschäftsberichte.
+- Offizielle SEC-Jahresberichte (10-K, 20-F und 40-F) über einen modularen Provider.
+- Heuristische Erkennung von Geschäftsmodell, Risiken, Chancen, Abhängigkeiten, Marken und Tochtergesellschaften.
+- Vorschläge für Segment- und Regionsdaten mit Konfidenz und Originaltextbeleg.
+- Review-Workflow vor dem Schreiben in `data/company_segments.csv` und `data/company_regions.csv`.
+- Gespeicherte Analyse-Snapshots unter `data/company_documents/`.
+- Übernahme geprüfter Erkenntnisse in das qualitative Unternehmensprofil.
+- Deutsche und englische Oberfläche sowie neue Tests für Analyse, Provider und Persistenz.
+
+
 ## 6.5.0
 
 - Ereignisbasierte Portfolio-Simulation aus `data/transactions.csv`.

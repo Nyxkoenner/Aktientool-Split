@@ -8,7 +8,9 @@ from stock_explorer.services.event_service import EventService
 from stock_explorer.services.index_service import IndexService
 from stock_explorer.services.news_service import NewsService
 from stock_explorer.services.profile_service import CompanyProfileService
+from stock_explorer.services.report_service import CompanyReportService
 
+from .annual_reports import SecAnnualReportProvider
 from .base import MarketDataProvider
 from .company_profiles import YahooCompanyProfileProvider
 from .events import ManualCsvEventProvider, SecFilingEventProvider, YahooCalendarEventProvider
@@ -57,6 +59,12 @@ def get_profile_service(name: str | None = None) -> CompanyProfileService:
         sec = get_sec_provider()
         return CompanyProfileService([YahooCompanyProfileProvider(), SecCompanyFactsProfileProvider(sec)])
     raise ValueError(f"Unbekannter Profilanbieter: {provider_name}. Aktuell verfügbar: yahoo")
+
+
+def get_company_report_service(*, data_dir: Path) -> CompanyReportService:
+    sec = get_sec_provider()
+    provider = SecAnnualReportProvider(sec)
+    return CompanyReportService(data_dir=data_dir, annual_report_provider=provider)
 
 
 def get_index_service(
