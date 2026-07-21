@@ -1,3 +1,3 @@
 """Modularer Aktien Explorer."""
 
-__version__ = "7.2.6"
+__version__ = "7.2.9"
