@@ -1,5 +1,20 @@
 # Changelog
 
+## 7.2.2
+
+- Drei Wissensmodi für Einsteiger, Fortgeschrittene und Experten mit getrenntem Session-State.
+- Seitenspezifische Hilfen und empfohlene nächste Schritte ohne Änderung der Berechnungslogik.
+- Zweisprachiges, durchsuchbares Börsenlexikon mit kuratierten externen Lernlinks.
+- Einheitliche Anzeige von Datenstand, Hauptquelle, Abdeckung, Basiswährung und Modellgrenzen.
+- Globaler Feedback-Bereich mit vorbereiteter E-Mail an `nykoenner@gmail.com`.
+- Feedback-Kontext enthält nur Version, Bereich, Sprache und Wissensmodus; keine automatischen Nutzerdaten.
+- Neue Regressionstests für Wissensmodus, Lexikon, Feedback-Link, Seitenguides und Übersetzungen.
+
+## 7.2.1
+
+- Sichtbare App-Version und Paketversion wieder auf einen gemeinsamen Stand gebracht.
+- Regressionstest verhindert künftig abweichende Versionsanzeigen.
+
 ## 7.2.0
 
 - Lokale, versionierte Q-Learning-Modelle pro Aktie unter `data/ai_models/`.
