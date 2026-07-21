@@ -256,6 +256,15 @@ def render_feedback_panel(
     selected_language = language or current_language()
     with st.expander(t("ux.feedback.title", selected_language), expanded=False):
         st.caption(t("ux.feedback.caption", selected_language, recipient=recipient))
+        from stock_explorer.ui.app_shell import request_navigation
+
+        st.button(
+            t("ux.feedback.structured", selected_language),
+            key="ux_feedback_open_structured",
+            on_click=request_navigation,
+            args=("pilot_center",),
+            use_container_width=True,
+        )
         category_keys = ("bug", "idea", "question", "data")
         category = st.selectbox(
             t("ux.feedback.category", selected_language),

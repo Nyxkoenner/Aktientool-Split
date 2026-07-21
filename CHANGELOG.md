@@ -1,15 +1,28 @@
 # Changelog
 
+## 7.2.7
+
+- Erststart-Onboarding für Wissensmodus, Darstellungsmodus und freiwillige Pilot-Telemetrie.
+- Neue Pilot-Zentrale mit fiktiver Demo, sechs Testaufgaben und strukturiertem Feedback.
+- Lokale JSONL-Speicherung mit Feedback-Referenz und CSV-Export.
+- Datensparsame Seitenereignisse nur nach ausdrücklicher Einwilligung.
+- Explizite Telemetrie-Allowlist verhindert Portfolio-, Dokument- und andere sensible Metadaten.
+- PIN-geschützte lokale Pilot-Auswertung über `PILOT_ADMIN_PIN` oder Streamlit-Secrets.
+- Pilotdaten unter `data/pilot/` sind von Git ausgeschlossen.
+- Neue Domain-, Service-, Navigations-, Datenschutz- und Übersetzungstests.
+
+## 7.2.6
+
+- Dauerhafte Versionskonsistenztests ohne fest eingetragene alte Patch-Version.
+
+## 7.2.5
+
+- Fehlendes hierarchisches Navigationsmodul ergänzt.
+
 ## 7.2.4
 
-- Anzeigeprofile Automatisch, Kompakt / Smartphone und Desktop mit getrenntem Session-State.
-- CSS-Media-Queries für kleine Bildschirme sowie erzwingbare Kompaktansicht.
-- Kompakte Hauptnavigation über Selectbox; automatische und Desktopansicht behalten die horizontale Navigation.
-- Touch-Ziele von mindestens 44 Pixeln für Buttons, Downloads, Eingaben und Expander.
-- Gestapelte Startkarten, Unternehmenskennzahlen, Analyseschritte und Pfadnavigation im Kompaktmodus.
-- Horizontal scrollbar bleibende Tabellen und Tabs statt abgeschnittener Inhalte.
-- Responsive Seitenränder und Überschriftengrößen für Smartphones.
-- Neue Tests für Anzeigepräferenzen, CSS-Regeln, Navigation, Übersetzungen und Versionskonsistenz.
+- Automatischer, kompakter und Desktop-Darstellungsmodus.
+- Responsive Navigation, gestapelte Karten, touchfreundliche Bedienelemente und mobile Tabellen.
 
 ## 7.2.3
 

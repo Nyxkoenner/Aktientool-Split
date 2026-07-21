@@ -26,7 +26,7 @@ NAVIGATION_GROUPS: Final[tuple[NavigationGroup, ...]] = (
     NavigationGroup(
         group_id="start",
         translation_key="ux.nav.group.start",
-        pages=("start",),
+        pages=("start", "pilot_center"),
         default_page="start",
     ),
     NavigationGroup(

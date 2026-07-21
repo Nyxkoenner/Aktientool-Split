@@ -98,3 +98,7 @@ __all__ = [
     "safe_float",
     "to_percent",
 ]
+
+from .pilot_models import PilotEvent, PilotFeedback, PilotSummary
+
+__all__ += ["PilotEvent", "PilotFeedback", "PilotSummary"]

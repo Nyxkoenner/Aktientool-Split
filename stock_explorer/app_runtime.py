@@ -11,13 +11,22 @@ import streamlit as st
 
 from stock_explorer import legacy_app as legacy
 from stock_explorer.application import ScannerThresholds, SidebarSelection, selected_tickers
-from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY, FEEDBACK_EMAIL, LOG_DIR
+from stock_explorer.config import (
+    APP_TITLE,
+    APP_VERSION,
+    BASE_CURRENCY,
+    FEEDBACK_EMAIL,
+    LOG_DIR,
+    PILOT_DATA_DIR,
+)
 from stock_explorer.i18n import current_language, normalize_page_id, t
 from stock_explorer.services.app_logging import configure_application_logging
+from stock_explorer.services.pilot_store import PilotStore
 from stock_explorer.services.universe_session import UniverseSessionStore
 from stock_explorer.ui import (
     DataTrustSnapshot,
     apply_responsive_layout,
+    record_pilot_page_visit,
     render_ai_lab,
     render_analysis_next_steps,
     render_data_trust_panel,
@@ -29,7 +38,10 @@ from stock_explorer.ui import (
     render_knowledge_selector,
     render_language_selector,
     render_main_navigation,
+    render_onboarding_panel,
     render_page_guidance,
+    render_pilot_banner,
+    render_pilot_center,
     render_portfolio_simulation,
     render_scenario_engine,
     render_source_monitor,
@@ -194,11 +206,18 @@ def _routes(
     status_summary: dict[str, Any],
     status_detail: pd.DataFrame,
     selection: SidebarSelection,
+    pilot_store: PilotStore,
 ) -> dict[str, PageRenderer]:
     thresholds: ScannerThresholds = selection.thresholds
 
     routes: dict[str, Callable[[], None]] = {
         "start": lambda: render_start_page(data),
+        "pilot_center": lambda: render_pilot_center(
+            data,
+            pilot_store,
+            version=APP_VERSION,
+            recipient=FEEDBACK_EMAIL,
+        ),
         "analysis_hub": lambda: render_guided_analysis_hub(data),
         "overview": lambda: legacy.render_overview(data),
         "data_status": lambda: legacy.render_data_status(status_summary, status_detail, data),
@@ -251,17 +270,26 @@ def _routes(
 def main() -> None:
     """Startet den modularen V7-Anwendungsablauf."""
     configure_application_logging(LOG_DIR)
+    pilot_store = PilotStore(PILOT_DATA_DIR)
     st.set_page_config(page_title=APP_TITLE, page_icon="📈", layout="wide")
     apply_responsive_layout()
     with st.sidebar:
         render_language_selector()
     language = current_language()
     render_header(APP_VERSION)
+    render_pilot_banner(version=APP_VERSION, language=language)
+    render_onboarding_panel(pilot_store, version=APP_VERSION, language=language)
 
     selection = _render_sidebar(language)
     active_page = render_main_navigation()
+    record_pilot_page_visit(
+        pilot_store,
+        page_id=active_page,
+        version=APP_VERSION,
+        language=language,
+    )
 
-    if active_page == "start":
+    if active_page in {"start", "pilot_center"}:
         selected_constituents = selection.selected_constituents()
         requested_tickers = selected_tickers(selected_constituents, legacy.clean_ticker)
         snapshot = UniverseSessionStore(cast(Any, st.session_state)).snapshot(selected_constituents)
@@ -271,13 +299,21 @@ def main() -> None:
             and snapshot.loaded_tickers == requested_tickers
         )
         if not selection.reload_clicked and not has_current_data:
-            render_start_page(pd.DataFrame())
-            st.info(t("ux.home.load_hint", language))
+            if active_page == "pilot_center":
+                render_pilot_center(
+                    pd.DataFrame(),
+                    pilot_store,
+                    version=APP_VERSION,
+                    recipient=FEEDBACK_EMAIL,
+                )
+            else:
+                render_start_page(pd.DataFrame())
+                st.info(t("ux.home.load_hint", language))
             return
 
     data, histories, status_summary, status_detail = _load_and_score_universe(selection, language)
 
-    if active_page not in {"start", "analysis_hub"}:
+    if active_page not in {"start", "pilot_center", "analysis_hub"}:
         render_page_guidance(active_page, language=language)
         st.divider()
     dispatch_page(
@@ -288,6 +324,7 @@ def main() -> None:
             status_summary=status_summary,
             status_detail=status_detail,
             selection=selection,
+            pilot_store=pilot_store,
         ),
     )
     render_analysis_next_steps(active_page)

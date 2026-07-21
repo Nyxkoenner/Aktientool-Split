@@ -11,6 +11,9 @@ class NavigationItem:
 
 
 MAIN_NAVIGATION: tuple[NavigationItem, ...] = (
+    NavigationItem("start", "nav.start", "Start"),
+    NavigationItem("pilot_center", "nav.pilot_center", "Pilot & Feedback"),
+    NavigationItem("analysis_hub", "nav.analysis_hub", "Aktie analysieren"),
     NavigationItem("overview", "nav.overview", "Überblick"),
     NavigationItem("data_status", "nav.data_status", "Datenstatus"),
     NavigationItem("fundamentals", "nav.fundamentals", "Fundamentaldaten"),
@@ -36,17 +39,18 @@ MAIN_NAVIGATION: tuple[NavigationItem, ...] = (
 
 _PAGE_BY_ID = {item.page_id: item for item in MAIN_NAVIGATION}
 _PAGE_BY_LEGACY = {item.legacy_label: item.page_id for item in MAIN_NAVIGATION}
+_FALLBACK_PAGE_ID = "overview"
 
 
 def normalize_page_id(value: str | None) -> str:
     candidate = str(value or "").strip()
     if candidate in _PAGE_BY_ID:
         return candidate
-    return _PAGE_BY_LEGACY.get(candidate, MAIN_NAVIGATION[0].page_id)
+    return _PAGE_BY_LEGACY.get(candidate, _FALLBACK_PAGE_ID)
 
 
 def legacy_page_label(page_id: str) -> str:
-    return _PAGE_BY_ID.get(normalize_page_id(page_id), MAIN_NAVIGATION[0]).legacy_label
+    return _PAGE_BY_ID.get(normalize_page_id(page_id), _PAGE_BY_ID[_FALLBACK_PAGE_ID]).legacy_label
 
 
 def translation_key_for_page(page_id: str) -> str:

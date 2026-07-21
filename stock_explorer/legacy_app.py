@@ -32,6 +32,12 @@ logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 from dateutil import parser as dateparser
 
 from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY
+from stock_explorer.domain.analyst_formatting import (
+    analyst_table_unit_caption,
+    format_analyst_table,
+    format_currency_amount,
+    normalize_currency,
+)
 from stock_explorer.domain.value_utils import (
     clean_ticker,
     deduplicate_dataframe_columns,
@@ -10461,28 +10467,41 @@ def _render_analyst_outlook(info: dict[str, Any], enrichment: dict[str, Any], cu
     low_target = safe_float(targets.get("low")) or safe_float(info.get("targetLowPrice"))
     high_target = safe_float(targets.get("high")) or safe_float(info.get("targetHighPrice"))
     upside = (mean_target / current_price - 1) * 100 if mean_target is not None and current_price not in (None, 0) else None
+    quote_currency = normalize_currency(info.get("currency"), info.get("financialCurrency"))
+    report_currency = normalize_currency(info.get("financialCurrency"), quote_currency)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Analystenurteil", str(info.get("recommendationKey") or "–").upper())
-    c2.metric("Mittleres Kursziel", format_number(mean_target, 2))
-    c3.metric("Spanne", f"{format_number(low_target, 2)} – {format_number(high_target, 2)}")
+    c2.metric(
+        "Mittleres Kursziel",
+        format_currency_amount(mean_target, quote_currency, compact=False),
+    )
+    c3.metric(
+        "Spanne",
+        f"{format_currency_amount(low_target, quote_currency, compact=False)} – "
+        f"{format_currency_amount(high_target, quote_currency, compact=False)}",
+    )
     c4.metric("Abstand zum Mittel", format_percent(upside, 1, signed=True))
 
     tabs = st.tabs(["Empfehlungen", "Umsatzschätzungen", "Gewinnschätzungen", "Wachstum", "Up-/Downgrades"])
-    frames = [
-        enrichment.get("recommendations", pd.DataFrame()),
-        enrichment.get("revenue_estimate", pd.DataFrame()),
-        enrichment.get("earnings_estimate", pd.DataFrame()),
-        enrichment.get("growth_estimates", pd.DataFrame()),
-        enrichment.get("upgrades_downgrades", pd.DataFrame()),
+    table_specs = [
+        (enrichment.get("recommendations", pd.DataFrame()), "recommendations", ""),
+        (enrichment.get("revenue_estimate", pd.DataFrame()), "revenue", report_currency),
+        (enrichment.get("earnings_estimate", pd.DataFrame()), "earnings", report_currency),
+        (enrichment.get("growth_estimates", pd.DataFrame()), "growth", ""),
+        (enrichment.get("upgrades_downgrades", pd.DataFrame()), "upgrades", ""),
     ]
-    for tab, frame in zip(tabs, frames):
+    for tab, (frame, table_kind, currency) in zip(tabs, table_specs):
         with tab:
             compact = _compact_profile_table(frame, 30)
             if compact.empty:
                 st.info("Für diesen Ticker sind keine entsprechenden Analystendaten verfügbar.")
             else:
-                st.dataframe(compact, hide_index=True, use_container_width=True)
+                caption = analyst_table_unit_caption(table_kind, currency)
+                if caption:
+                    st.caption(caption)
+                formatted = format_analyst_table(compact, table_kind, currency)
+                st.dataframe(formatted, hide_index=True, use_container_width=True)
 
 
 def _render_company_profile_status(info: dict[str, Any], financials: pd.DataFrame, enrichment: dict[str, Any], manual: dict[str, str]) -> None:
