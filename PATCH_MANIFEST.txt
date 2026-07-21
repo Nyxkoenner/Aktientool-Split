@@ -1,0 +1,10 @@
+V7.2.9 – Einheiten in Analystenschätzungen
+
+ERSETZEN:
+stock_explorer/legacy_app.py
+stock_explorer/__init__.py
+stock_explorer/config.py
+
+NEU:
+stock_explorer/domain/analyst_formatting.py
+tests/test_analyst_formatting_v729.py

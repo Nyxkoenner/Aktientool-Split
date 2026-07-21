@@ -20,6 +20,15 @@ from .guided_analysis import (
 )
 from .news_intelligence import render_news_intelligence
 from .page_router import UnknownPageError, dispatch_page
+from .pilot_readiness import (
+    PILOT_TASK_IDS,
+    pilot_session_id,
+    record_pilot_page_visit,
+    render_onboarding_panel,
+    render_pilot_banner,
+    render_pilot_center,
+    telemetry_consent_enabled,
+)
 from .portfolio_simulation import render_portfolio_simulation
 from .profile_automation import render_profile_automation
 from .responsive import (
@@ -46,6 +55,13 @@ from .ux_foundation import (
 )
 
 __all__ = [
+    "PILOT_TASK_IDS",
+    "pilot_session_id",
+    "record_pilot_page_visit",
+    "render_onboarding_panel",
+    "render_pilot_banner",
+    "render_pilot_center",
+    "telemetry_consent_enabled",
     "GUIDED_ANALYSIS_STEPS",
     "render_analysis_next_steps",
     "render_guided_analysis_hub",

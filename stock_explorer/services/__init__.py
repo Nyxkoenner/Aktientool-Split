@@ -81,3 +81,7 @@ __all__ = [
     "save_ai_lab_run",
     "snapshot_from_row",
 ]
+
+from .pilot_store import PilotStore, build_feedback_reference, verify_admin_pin
+
+__all__ += ["PilotStore", "build_feedback_reference", "verify_admin_pin"]

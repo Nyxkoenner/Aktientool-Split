@@ -1,23 +1,19 @@
-# Aktien Explorer V7.2.6 – Versions-Test-Fix
+# V7.2.9 – Einheiten in Analystenschätzungen
 
-Dieser Mini-Patch setzt V7.2.5 voraus.
+Voraussetzung: funktionierender Stand V7.2.8.
 
-## Ursache
+Den gesamten Inhalt dieses Patch-Ordners in das Projekt kopieren und vorhandene Dateien ersetzen.
 
-Die ältere Datei `tests/test_version_consistency_v721.py` erwartete weiterhin fest die Version `7.2.2`. Nach dem Update auf V7.2.5 musste der Test deshalb scheitern, obwohl Paket- und Anzeigeversion korrekt übereinstimmten.
+## Änderungen
 
-## Installation
+- Kursziele zeigen jetzt die Kurswährung, zum Beispiel `415,01 EUR`.
+- Umsatzschätzungen werden kompakt als Tsd., Mio., Mrd. oder Bio. samt Berichtswährung dargestellt.
+- Gewinnschätzungen tragen die Einheit `Währung/Aktie`.
+- Wachstumswerte werden als Prozent statt als Dezimalzahl angezeigt.
+- Analystenzahlen werden ohne Dezimalstellen dargestellt.
+- Analystentabellen erhalten verständlichere deutsche Spaltenüberschriften und einen Einheitenhinweis.
 
-Den gesamten Inhalt dieses Ordners in das Projektverzeichnis kopieren und vorhandene Dateien ersetzen.
-
-Ersetzt werden:
-
-- `stock_explorer/__init__.py`
-- `stock_explorer/config.py`
-- `tests/test_version_consistency_v721.py`
-- `tests/test_version_consistency_v724.py`
-
-Danach ausführen:
+## Prüfung
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -25,4 +21,4 @@ Danach ausführen:
 python -m streamlit run app.py
 ```
 
-Die App zeigt anschließend Version `7.2.6`. Die Regressionstests prüfen künftig nur noch, dass Paket- und Anzeigeversion übereinstimmen und dem Format `X.Y.Z` entsprechen. Sie enthalten keine veraltete feste Versionsnummer mehr.
+Anschließend unter **Unternehmensprofile → Analysten** die Tabs Umsatzschätzungen, Gewinnschätzungen und Wachstum prüfen.

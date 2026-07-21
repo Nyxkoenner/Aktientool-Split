@@ -341,3 +341,227 @@ UX_TRANSLATIONS["en"].update(
         "ux.display.caption.desktop": "Wide tables, multi-column cards and horizontal main navigation.",
     }
 )
+
+UX_TRANSLATIONS["de"].update(
+    {
+        "nav.pilot_center": "Pilot & Feedback",
+        "ux.feedback.structured": "Strukturiertes Pilot-Feedback öffnen",
+        "pilot.banner": (
+            "Geschlossener UX-Pilot · Version {version}. Funktionen, Datenqualität und Verständlichkeit "
+            "werden noch gemeinsam mit Testnutzern geprüft."
+        ),
+        "pilot.onboarding.title": "Willkommen im Pilot des Aktien Explorers",
+        "pilot.onboarding.intro": (
+            "Wähle eine passende Erklärungstiefe und Darstellung. Diese Auswahl verändert nur die Oberfläche, "
+            "nicht die Berechnungen."
+        ),
+        "pilot.onboarding.knowledge": "Wie viel Börsenerfahrung hast du?",
+        "pilot.onboarding.display": "Welche Darstellung möchtest du verwenden?",
+        "pilot.onboarding.consent": "Anonyme Seitenwechsel für den lokalen Pilot speichern",
+        "pilot.onboarding.consent_help": (
+            "Gespeichert werden nur eine zufällige Sitzungs-ID, Seiten-ID, App-Version und UI-Einstellungen. "
+            "Keine Portfolio-, Dokument-, Modell- oder Freitextdaten."
+        ),
+        "pilot.onboarding.start": "Pilot starten",
+        "pilot.onboarding.skip": "Einführung überspringen",
+        "pilot.onboarding.done": "Die Pilot-Einstellungen wurden für diese Sitzung übernommen.",
+        "pilot.center.title": "Pilot-Zentrale",
+        "pilot.center.intro": (
+            "Hier findest du eine kurze Demo, die Aufgaben für Testnutzer, strukturiertes Feedback und eine "
+            "lokale Auswertung für die Pilotbetreuung."
+        ),
+        "pilot.center.telemetry": "Anonyme Pilot-Telemetrie für diese Sitzung erlauben",
+        "pilot.center.telemetry_help": (
+            "Du kannst die Einwilligung jederzeit ausschalten. Bereits lokal gespeicherte Einträge werden dadurch nicht automatisch gelöscht."
+        ),
+        "pilot.center.telemetry_caption": (
+            "Erfasst werden nur Seitenwechsel mit zufälliger Sitzungs-ID und UI-Kontext – keine Portfolio-, Dokument- oder Freitextdaten."
+        ),
+        "pilot.center.tab.demo": "Demo",
+        "pilot.center.tab.tasks": "Testaufgaben",
+        "pilot.center.tab.feedback": "Feedback",
+        "pilot.center.tab.admin": "Pilot-Auswertung",
+        "pilot.demo.title": "Beispielanalyse in zwei Minuten",
+        "pilot.demo.fictional": "Fiktive Beispieldaten – keine reale Aktie und keine Anlageempfehlung.",
+        "pilot.demo.company": "Muster Industrie AG",
+        "pilot.demo.quality": "Qualität",
+        "pilot.demo.pe": "KGV",
+        "pilot.demo.drawdown": "Abstand zum Hoch",
+        "pilot.demo.scenario": "Negativszenario",
+        "pilot.demo.interpretation": (
+            "**Einordnung:** Die Musterfirma wirkt qualitativ solide und nicht extrem bewertet. Der Kurs liegt "
+            "unter seinem Hoch; ein negatives Szenario zeigt trotzdem ein spürbares Verlustrisiko. Eine "
+            "Entscheidung braucht zusätzlich Geschäftsmodell, Bilanz, Risiken und Quellenprüfung."
+        ),
+        "pilot.demo.warning": (
+            "Ein Score, ein KGV oder ein KI-Ergebnis reicht nie allein aus. Achte auf Datenstand, Annahmen und "
+            "Gegenargumente."
+        ),
+        "pilot.demo.real_analysis": "Mit echten Marktdaten zur geführten Analyse",
+        "pilot.demo.load_data": (
+            "Lade links zuerst einen kleinen Indexausschnitt. Danach kannst du von hier direkt in die geführte "
+            "Analyse wechseln."
+        ),
+        "pilot.tasks.title": "Aufgaben für den UX-Pilot",
+        "pilot.tasks.intro": (
+            "Bearbeite die Aufgaben möglichst ohne zusätzliche Hilfe. Markiere nur, was du wirklich abgeschlossen hast."
+        ),
+        "pilot.tasks.choose_company": "Eine bisher wenig bekannte Aktie auswählen",
+        "pilot.tasks.understand_business": "Geschäftsmodell und wichtigste Umsatztreiber erklären",
+        "pilot.tasks.review_risks": "Mindestens drei Risiken oder Gegenargumente finden",
+        "pilot.tasks.run_scenario": "Ein negatives und ein neutrales Szenario durchspielen",
+        "pilot.tasks.use_watchlist": "Watchlist oder Portfolio-Bereich öffnen und verstehen",
+        "pilot.tasks.send_feedback": "Mindestens ein konkretes Feedback absenden",
+        "pilot.tasks.progress": "{completed} von {total} Pilotaufgaben abgeschlossen",
+        "pilot.tasks.complete": "Danke – alle Pilotaufgaben wurden in dieser Sitzung abgeschlossen.",
+        "pilot.feedback.title": "Strukturiertes Pilot-Feedback",
+        "pilot.feedback.intro": (
+            "Das Feedback wird zunächst lokal unter data/pilot/ gespeichert. Optional kannst du anschließend eine "
+            "Kopie über dein E-Mail-Programm an nykoenner@gmail.com senden."
+        ),
+        "pilot.feedback.category": "Kategorie",
+        "pilot.feedback.category.bug": "Fehler",
+        "pilot.feedback.category.idea": "Verbesserungsidee",
+        "pilot.feedback.category.question": "Verständnisfrage",
+        "pilot.feedback.category.data": "Datenproblem",
+        "pilot.feedback.category.usability": "Bedienung / Nutzerfreundlichkeit",
+        "pilot.feedback.rating": "Wie hilfreich war die aktuelle Erfahrung?",
+        "pilot.feedback.message": "Dein Feedback",
+        "pilot.feedback.placeholder": "Was war unklar, langsam, hilfreich oder fehlerhaft?",
+        "pilot.feedback.email": "E-Mail für Rückfragen (optional)",
+        "pilot.feedback.storage_consent": "Ich stimme der lokalen Speicherung dieses Feedbacks zu.",
+        "pilot.feedback.save": "Feedback lokal speichern",
+        "pilot.feedback.consent_required": "Bitte der lokalen Speicherung zustimmen.",
+        "pilot.feedback.saved": "Danke! Dein Feedback wurde unter {reference} gespeichert.",
+        "pilot.feedback.email_copy": "Feedback-Kopie per E-Mail öffnen",
+        "pilot.feedback.privacy": (
+            "Das Formular speichert nur die sichtbaren Eingaben sowie App-Version, Bereich, Sprache, Wissens- und "
+            "Darstellungsmodus. Keine Portfolio-, Dokument- oder Modelldaten werden angehängt."
+        ),
+        "pilot.admin.title": "Lokale Pilot-Auswertung",
+        "pilot.admin.not_configured": (
+            "Für die Auswertung ist noch kein lokaler Admin-PIN konfiguriert. Setze vor dem App-Start die "
+            "Umgebungsvariable PILOT_ADMIN_PIN oder den Secret-Wert pilot_admin_pin."
+        ),
+        "pilot.admin.pin": "Admin-PIN",
+        "pilot.admin.unlock": "Auswertung entsperren",
+        "pilot.admin.wrong_pin": "Der PIN ist nicht korrekt.",
+        "pilot.admin.feedback_count": "Feedbacks",
+        "pilot.admin.event_count": "Seitenereignisse",
+        "pilot.admin.rating": "Ø Bewertung",
+        "pilot.admin.download": "Feedback als CSV herunterladen",
+        "pilot.admin.no_feedback": "Noch kein strukturiertes Feedback gespeichert.",
+        "pilot.admin.page": "Bereich",
+        "pilot.admin.views": "Aufrufe",
+    }
+)
+
+UX_TRANSLATIONS["en"].update(
+    {
+        "nav.pilot_center": "Pilot & feedback",
+        "ux.feedback.structured": "Open structured pilot feedback",
+        "pilot.banner": (
+            "Closed UX pilot · Version {version}. Features, data quality and clarity are still being evaluated "
+            "with test users."
+        ),
+        "pilot.onboarding.title": "Welcome to the Aktien Explorer pilot",
+        "pilot.onboarding.intro": (
+            "Choose a suitable explanation depth and display mode. This changes the interface only, not the calculations."
+        ),
+        "pilot.onboarding.knowledge": "How much investing experience do you have?",
+        "pilot.onboarding.display": "Which display mode would you like to use?",
+        "pilot.onboarding.consent": "Store anonymous page changes for the local pilot",
+        "pilot.onboarding.consent_help": (
+            "Only a random session ID, page ID, app version and interface settings are stored. No portfolio, "
+            "document, model or free-text data."
+        ),
+        "pilot.onboarding.start": "Start pilot",
+        "pilot.onboarding.skip": "Skip introduction",
+        "pilot.onboarding.done": "The pilot settings have been applied for this session.",
+        "pilot.center.title": "Pilot centre",
+        "pilot.center.intro": (
+            "This area contains a short demo, tester tasks, structured feedback and a local pilot summary for the administrator."
+        ),
+        "pilot.center.telemetry": "Allow anonymous pilot telemetry for this session",
+        "pilot.center.telemetry_help": (
+            "You can revoke consent at any time. Previously stored local entries are not deleted automatically."
+        ),
+        "pilot.center.telemetry_caption": (
+            "Only page changes with a random session ID and interface context are recorded – no portfolio, document or free-text data."
+        ),
+        "pilot.center.tab.demo": "Demo",
+        "pilot.center.tab.tasks": "Test tasks",
+        "pilot.center.tab.feedback": "Feedback",
+        "pilot.center.tab.admin": "Pilot summary",
+        "pilot.demo.title": "Two-minute example analysis",
+        "pilot.demo.fictional": "Fictional example data – not a real stock and not investment advice.",
+        "pilot.demo.company": "Sample Industries plc",
+        "pilot.demo.quality": "Quality",
+        "pilot.demo.pe": "P/E",
+        "pilot.demo.drawdown": "Below high",
+        "pilot.demo.scenario": "Downside scenario",
+        "pilot.demo.interpretation": (
+            "**Interpretation:** The sample company appears reasonably solid and not extremely valued. The share "
+            "price is below its high, while the downside scenario still shows meaningful loss potential. A decision "
+            "also requires a review of the business, balance sheet, risks and sources."
+        ),
+        "pilot.demo.warning": (
+            "A score, P/E ratio or AI result is never sufficient on its own. Check data dates, assumptions and counterarguments."
+        ),
+        "pilot.demo.real_analysis": "Continue to guided analysis with real market data",
+        "pilot.demo.load_data": (
+            "Load a small index sample in the sidebar first. You can then continue directly to the guided analysis."
+        ),
+        "pilot.tasks.title": "UX pilot tasks",
+        "pilot.tasks.intro": (
+            "Complete these tasks without additional help where possible. Mark only tasks you actually completed."
+        ),
+        "pilot.tasks.choose_company": "Choose a stock you do not already know well",
+        "pilot.tasks.understand_business": "Explain the business model and main revenue drivers",
+        "pilot.tasks.review_risks": "Find at least three risks or counterarguments",
+        "pilot.tasks.run_scenario": "Run one downside and one neutral scenario",
+        "pilot.tasks.use_watchlist": "Open and understand the watchlist or portfolio area",
+        "pilot.tasks.send_feedback": "Submit at least one specific piece of feedback",
+        "pilot.tasks.progress": "{completed} of {total} pilot tasks completed",
+        "pilot.tasks.complete": "Thank you – all pilot tasks were completed in this session.",
+        "pilot.feedback.title": "Structured pilot feedback",
+        "pilot.feedback.intro": (
+            "Feedback is initially stored locally under data/pilot/. You may then open a copy in your email client "
+            "and send it to nykoenner@gmail.com."
+        ),
+        "pilot.feedback.category": "Category",
+        "pilot.feedback.category.bug": "Bug",
+        "pilot.feedback.category.idea": "Improvement idea",
+        "pilot.feedback.category.question": "Question",
+        "pilot.feedback.category.data": "Data issue",
+        "pilot.feedback.category.usability": "Usability",
+        "pilot.feedback.rating": "How helpful was the current experience?",
+        "pilot.feedback.message": "Your feedback",
+        "pilot.feedback.placeholder": "What was unclear, slow, helpful or broken?",
+        "pilot.feedback.email": "Email for follow-up (optional)",
+        "pilot.feedback.storage_consent": "I consent to storing this feedback locally.",
+        "pilot.feedback.save": "Save feedback locally",
+        "pilot.feedback.consent_required": "Please consent to local storage.",
+        "pilot.feedback.saved": "Thank you! Your feedback was saved as {reference}.",
+        "pilot.feedback.email_copy": "Open feedback copy in email client",
+        "pilot.feedback.privacy": (
+            "The form stores only the visible inputs plus app version, section, language, knowledge and display mode. "
+            "No portfolio, document or model data is attached."
+        ),
+        "pilot.admin.title": "Local pilot summary",
+        "pilot.admin.not_configured": (
+            "No local admin PIN is configured. Set the PILOT_ADMIN_PIN environment variable or the "
+            "pilot_admin_pin secret before starting the app."
+        ),
+        "pilot.admin.pin": "Admin PIN",
+        "pilot.admin.unlock": "Unlock summary",
+        "pilot.admin.wrong_pin": "The PIN is incorrect.",
+        "pilot.admin.feedback_count": "Feedback items",
+        "pilot.admin.event_count": "Page events",
+        "pilot.admin.rating": "Average rating",
+        "pilot.admin.download": "Download feedback as CSV",
+        "pilot.admin.no_feedback": "No structured feedback has been stored yet.",
+        "pilot.admin.page": "Section",
+        "pilot.admin.views": "Views",
+    }
+)

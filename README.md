@@ -1,32 +1,29 @@
-# Aktien Explorer V7.2.4
-
-
-## Mobile und responsive Oberfläche V7.2.4
-
-Die Oberfläche besitzt nun drei Anzeigeprofile: **Automatisch**, **Kompakt /
-Smartphone** und **Desktop**. Im automatischen Modus reagieren Spalten, Tabellen,
-Tabs und die Hauptnavigation auf kleine Bildschirmbreiten. Der kompakte Modus kann
-auch auf einem Desktop erzwungen werden und eignet sich zum Testen der
-Smartphone-Darstellung.
-
-Neu sind insbesondere:
-
-- umbruchfähige Hauptnavigation und kompakte Selectbox-Navigation
-- mindestens 44 Pixel hohe Touch-Ziele für Buttons und wichtige Eingabefelder
-- gestapelte Startkarten, Kennzahlen und Analyse-Schritte im kompakten Modus
-- horizontal scrollbar bleibende Tabellen statt abgeschnittener Inhalte
-- mobile Tabs, Expander und Radio-Gruppen ohne starre Ein-Zeilen-Darstellung
-- responsive Überschriften und reduzierte Seitenränder auf kleinen Displays
-- getrennte Session-State-Keys für Anzeigepräferenz und Anzeige-Widget
-
-Die Berechnungen und Fachseiten bleiben unverändert. Komplexe Rohdatentabellen,
-Geschäftsberichtbearbeitung und KI-Training sind weiterhin primär für Desktop oder
-Tablet gedacht; mobil stehen Navigation, Überblick, Watchlist und gespeicherte
-Ergebnisse im Vordergrund.
+# Aktien Explorer V7.2.7
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
 weiterhin verfügbar.
+
+
+## Pilot Readiness V7.2.7
+
+V7.2.7 bereitet den geschlossenen UX-Pilot vor. Beim ersten Start erscheint eine
+kurze Einführung für Wissensstand, Darstellungsmodus und eine freiwillige,
+datensparsame Pilot-Telemetrie. Die Einwilligung gilt nur für Seitenwechsel und
+speichert keine Portfolio-, Dokument-, Modell- oder Freitextdaten.
+
+Der neue Bereich **Start → Pilot & Feedback** enthält:
+
+- eine klar als fiktiv gekennzeichnete Zwei-Minuten-Demo
+- sechs einheitliche Aufgaben für Einsteiger, Fortgeschrittene und Experten
+- strukturiertes Feedback mit Bewertung, Kategorie und optionaler Rückfrage-E-Mail
+- eine Referenznummer für jedes gespeicherte Feedback
+- einen optionalen Mailto-Link an `nykoenner@gmail.com`
+- eine lokale, PIN-geschützte Pilot-Auswertung mit CSV-Export
+
+Pilotdaten liegen ausschließlich lokal unter `data/pilot/` und werden von Git
+ausgeschlossen. Ohne Backend wird keine E-Mail automatisch versendet. Der Nutzer
+öffnet und bestätigt eine vorbereitete Nachricht in seinem eigenen E-Mail-Programm.
 
 
 ## Geführte Analyse und reduzierte Navigation V7.2.3

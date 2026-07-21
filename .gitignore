@@ -24,3 +24,6 @@ data/logs/
 
 # Local persistent AI/RL model versions
 data/ai_models/
+
+# Local UX-pilot feedback and consent-based events
+data/pilot/
