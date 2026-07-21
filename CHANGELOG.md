@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.2.10
+
+- Pilot-Feedback wird nicht mehr lokal gespeichert.
+- Lokale Pilot-Auswertung und Admin-PIN wurden aus der Nutzeroberfläche entfernt.
+- Feedback kann optional als vorbereitete E-Mail an `nykoenner@gmail.com` geöffnet werden.
+- Ohne Bestätigung im lokalen E-Mail-Programm werden keine Feedbackdaten übermittelt.
+- Bewertung, Kategorie und optionale Kontaktadresse werden in den sichtbaren E-Mail-Text übernommen.
+- Regressionstests sichern Empfänger, Mailtext und fehlende lokale Feedbackspeicherung ab.
+
 ## 7.2.7
 
 - Erststart-Onboarding für Wissensmodus, Darstellungsmodus und freiwillige Pilot-Telemetrie.

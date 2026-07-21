@@ -1,29 +1,28 @@
-# Aktien Explorer V7.2.7
+# Aktien Explorer V7.2.10
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
 weiterhin verfügbar.
 
 
-## Pilot Readiness V7.2.7
+## Pilot Readiness V7.2.10
 
-V7.2.7 bereitet den geschlossenen UX-Pilot vor. Beim ersten Start erscheint eine
-kurze Einführung für Wissensstand, Darstellungsmodus und eine freiwillige,
-datensparsame Pilot-Telemetrie. Die Einwilligung gilt nur für Seitenwechsel und
-speichert keine Portfolio-, Dokument-, Modell- oder Freitextdaten.
+Der geschlossene UX-Pilot enthält eine kurze Einführung für Wissensstand,
+Darstellungsmodus und eine freiwillige, datensparsame Pilot-Telemetrie. Die
+Einwilligung gilt nur für Seitenwechsel und speichert keine Portfolio-, Dokument-,
+Modell- oder Freitextdaten.
 
-Der neue Bereich **Start → Pilot & Feedback** enthält:
+Der Bereich **Start → Pilot & Feedback** enthält:
 
 - eine klar als fiktiv gekennzeichnete Zwei-Minuten-Demo
 - sechs einheitliche Aufgaben für Einsteiger, Fortgeschrittene und Experten
-- strukturiertes Feedback mit Bewertung, Kategorie und optionaler Rückfrage-E-Mail
-- eine Referenznummer für jedes gespeicherte Feedback
+- strukturiertes Feedback mit Bewertung, Kategorie und optionaler Kontaktadresse
 - einen optionalen Mailto-Link an `nykoenner@gmail.com`
-- eine lokale, PIN-geschützte Pilot-Auswertung mit CSV-Export
 
-Pilotdaten liegen ausschließlich lokal unter `data/pilot/` und werden von Git
-ausgeschlossen. Ohne Backend wird keine E-Mail automatisch versendet. Der Nutzer
-öffnet und bestätigt eine vorbereitete Nachricht in seinem eigenen E-Mail-Programm.
+Feedback wird nicht lokal gespeichert und nicht automatisch versendet. Nach dem
+Ausfüllen kann der Nutzer eine vorbereitete Nachricht im eigenen E-Mail-Programm
+öffnen, prüfen und freiwillig absenden. Ohne diesen Schritt erhält der Entwickler
+keine Feedbackdaten.
 
 
 ## Geführte Analyse und reduzierte Navigation V7.2.3

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-APP_VERSION = "7.2.9"
+APP_VERSION = "7.2.10"
 APP_TITLE = "Aktien Explorer"
 BASE_CURRENCY = "EUR"
 FEEDBACK_EMAIL = "nykoenner@gmail.com"

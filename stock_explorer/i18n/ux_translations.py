@@ -367,8 +367,8 @@ UX_TRANSLATIONS["de"].update(
         "pilot.onboarding.done": "Die Pilot-Einstellungen wurden für diese Sitzung übernommen.",
         "pilot.center.title": "Pilot-Zentrale",
         "pilot.center.intro": (
-            "Hier findest du eine kurze Demo, die Aufgaben für Testnutzer, strukturiertes Feedback und eine "
-            "lokale Auswertung für die Pilotbetreuung."
+            "Hier findest du eine kurze Demo, Aufgaben für Testnutzer und ein optionales Feedbackformular, "
+            "das eine vorbereitete E-Mail an den Entwickler öffnet."
         ),
         "pilot.center.telemetry": "Anonyme Pilot-Telemetrie für diese Sitzung erlauben",
         "pilot.center.telemetry_help": (
@@ -411,13 +411,13 @@ UX_TRANSLATIONS["de"].update(
         "pilot.tasks.review_risks": "Mindestens drei Risiken oder Gegenargumente finden",
         "pilot.tasks.run_scenario": "Ein negatives und ein neutrales Szenario durchspielen",
         "pilot.tasks.use_watchlist": "Watchlist oder Portfolio-Bereich öffnen und verstehen",
-        "pilot.tasks.send_feedback": "Mindestens ein konkretes Feedback absenden",
+        "pilot.tasks.send_feedback": "Mindestens ein konkretes Feedback vorbereiten oder per E-Mail senden",
         "pilot.tasks.progress": "{completed} von {total} Pilotaufgaben abgeschlossen",
         "pilot.tasks.complete": "Danke – alle Pilotaufgaben wurden in dieser Sitzung abgeschlossen.",
         "pilot.feedback.title": "Strukturiertes Pilot-Feedback",
         "pilot.feedback.intro": (
-            "Das Feedback wird zunächst lokal unter data/pilot/ gespeichert. Optional kannst du anschließend eine "
-            "Kopie über dein E-Mail-Programm an nykoenner@gmail.com senden."
+            "Deine Eingaben werden nicht lokal gespeichert und nicht automatisch versendet. Du kannst daraus "
+            "optional eine vorbereitete E-Mail an nykoenner@gmail.com öffnen."
         ),
         "pilot.feedback.category": "Kategorie",
         "pilot.feedback.category.bug": "Fehler",
@@ -428,15 +428,20 @@ UX_TRANSLATIONS["de"].update(
         "pilot.feedback.rating": "Wie hilfreich war die aktuelle Erfahrung?",
         "pilot.feedback.message": "Dein Feedback",
         "pilot.feedback.placeholder": "Was war unklar, langsam, hilfreich oder fehlerhaft?",
-        "pilot.feedback.email": "E-Mail für Rückfragen (optional)",
-        "pilot.feedback.storage_consent": "Ich stimme der lokalen Speicherung dieses Feedbacks zu.",
-        "pilot.feedback.save": "Feedback lokal speichern",
-        "pilot.feedback.consent_required": "Bitte der lokalen Speicherung zustimmen.",
-        "pilot.feedback.saved": "Danke! Dein Feedback wurde unter {reference} gespeichert.",
-        "pilot.feedback.email_copy": "Feedback-Kopie per E-Mail öffnen",
+        "pilot.feedback.email": "Kontakt-E-Mail im Nachrichtentext (optional)",
+        "pilot.feedback.storage_consent": "Nicht verwendet",
+        "pilot.feedback.save": "E-Mail vorbereiten",
+        "pilot.feedback.consent_required": "Nicht verwendet",
+        "pilot.feedback.saved": "Die E-Mail wurde vorbereitet.",
+        "pilot.feedback.email_copy": "E-Mail öffnen",
+        "pilot.feedback.prepare_email": "E-Mail vorbereiten",
+        "pilot.feedback.message_required": "Bitte gib mindestens drei Zeichen Feedback ein.",
+        "pilot.feedback.prepared": "Die E-Mail wurde vorbereitet. Sie wird erst nach deinem Klick im E-Mail-Programm versendet.",
+        "pilot.feedback.open_email": "E-Mail an nykoenner@gmail.com öffnen",
+        "pilot.feedback.email_optional": "Optional: Öffne die vorbereitete E-Mail an {recipient}. Ohne diesen Klick wird nichts übermittelt.",
         "pilot.feedback.privacy": (
-            "Das Formular speichert nur die sichtbaren Eingaben sowie App-Version, Bereich, Sprache, Wissens- und "
-            "Darstellungsmodus. Keine Portfolio-, Dokument- oder Modelldaten werden angehängt."
+            "Es wird nichts automatisch gespeichert oder versendet. Beim Öffnen der E-Mail werden nur die sichtbaren "
+            "Feedbackangaben sowie App-Version, Bereich, Sprache und Wissensmodus eingefügt."
         ),
         "pilot.admin.title": "Lokale Pilot-Auswertung",
         "pilot.admin.not_configured": (
@@ -480,7 +485,7 @@ UX_TRANSLATIONS["en"].update(
         "pilot.onboarding.done": "The pilot settings have been applied for this session.",
         "pilot.center.title": "Pilot centre",
         "pilot.center.intro": (
-            "This area contains a short demo, tester tasks, structured feedback and a local pilot summary for the administrator."
+            "This area contains a short demo, tester tasks and optional feedback that opens a prepared email to the developer."
         ),
         "pilot.center.telemetry": "Allow anonymous pilot telemetry for this session",
         "pilot.center.telemetry_help": (
@@ -521,13 +526,13 @@ UX_TRANSLATIONS["en"].update(
         "pilot.tasks.review_risks": "Find at least three risks or counterarguments",
         "pilot.tasks.run_scenario": "Run one downside and one neutral scenario",
         "pilot.tasks.use_watchlist": "Open and understand the watchlist or portfolio area",
-        "pilot.tasks.send_feedback": "Submit at least one specific piece of feedback",
+        "pilot.tasks.send_feedback": "Prepare or email at least one specific piece of feedback",
         "pilot.tasks.progress": "{completed} of {total} pilot tasks completed",
         "pilot.tasks.complete": "Thank you – all pilot tasks were completed in this session.",
         "pilot.feedback.title": "Structured pilot feedback",
         "pilot.feedback.intro": (
-            "Feedback is initially stored locally under data/pilot/. You may then open a copy in your email client "
-            "and send it to nykoenner@gmail.com."
+            "Your input is not stored locally or sent automatically. You can optionally open a prepared email to "
+            "nykoenner@gmail.com."
         ),
         "pilot.feedback.category": "Category",
         "pilot.feedback.category.bug": "Bug",
@@ -538,15 +543,20 @@ UX_TRANSLATIONS["en"].update(
         "pilot.feedback.rating": "How helpful was the current experience?",
         "pilot.feedback.message": "Your feedback",
         "pilot.feedback.placeholder": "What was unclear, slow, helpful or broken?",
-        "pilot.feedback.email": "Email for follow-up (optional)",
-        "pilot.feedback.storage_consent": "I consent to storing this feedback locally.",
-        "pilot.feedback.save": "Save feedback locally",
-        "pilot.feedback.consent_required": "Please consent to local storage.",
-        "pilot.feedback.saved": "Thank you! Your feedback was saved as {reference}.",
-        "pilot.feedback.email_copy": "Open feedback copy in email client",
+        "pilot.feedback.email": "Contact email in message (optional)",
+        "pilot.feedback.storage_consent": "Not used",
+        "pilot.feedback.save": "Prepare email",
+        "pilot.feedback.consent_required": "Not used",
+        "pilot.feedback.saved": "The email has been prepared.",
+        "pilot.feedback.email_copy": "Open email",
+        "pilot.feedback.prepare_email": "Prepare email",
+        "pilot.feedback.message_required": "Please enter at least three characters of feedback.",
+        "pilot.feedback.prepared": "The email has been prepared. It is sent only after you confirm it in your email client.",
+        "pilot.feedback.open_email": "Open email to nykoenner@gmail.com",
+        "pilot.feedback.email_optional": "Optional: open the prepared email to {recipient}. Nothing is transmitted without this click.",
         "pilot.feedback.privacy": (
-            "The form stores only the visible inputs plus app version, section, language, knowledge and display mode. "
-            "No portfolio, document or model data is attached."
+            "Nothing is stored or sent automatically. Opening the email inserts only the visible feedback fields plus "
+            "app version, section, language and knowledge mode."
         ),
         "pilot.admin.title": "Local pilot summary",
         "pilot.admin.not_configured": (
