@@ -1,9 +1,56 @@
-# Aktien Explorer V7.2.2
+# Aktien Explorer V7.2.4
+
+
+## Mobile und responsive Oberfläche V7.2.4
+
+Die Oberfläche besitzt nun drei Anzeigeprofile: **Automatisch**, **Kompakt /
+Smartphone** und **Desktop**. Im automatischen Modus reagieren Spalten, Tabellen,
+Tabs und die Hauptnavigation auf kleine Bildschirmbreiten. Der kompakte Modus kann
+auch auf einem Desktop erzwungen werden und eignet sich zum Testen der
+Smartphone-Darstellung.
+
+Neu sind insbesondere:
+
+- umbruchfähige Hauptnavigation und kompakte Selectbox-Navigation
+- mindestens 44 Pixel hohe Touch-Ziele für Buttons und wichtige Eingabefelder
+- gestapelte Startkarten, Kennzahlen und Analyse-Schritte im kompakten Modus
+- horizontal scrollbar bleibende Tabellen statt abgeschnittener Inhalte
+- mobile Tabs, Expander und Radio-Gruppen ohne starre Ein-Zeilen-Darstellung
+- responsive Überschriften und reduzierte Seitenränder auf kleinen Displays
+- getrennte Session-State-Keys für Anzeigepräferenz und Anzeige-Widget
+
+Die Berechnungen und Fachseiten bleiben unverändert. Komplexe Rohdatentabellen,
+Geschäftsberichtbearbeitung und KI-Training sind weiterhin primär für Desktop oder
+Tablet gedacht; mobil stehen Navigation, Überblick, Watchlist und gespeicherte
+Ergebnisse im Vordergrund.
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
 weiterhin verfügbar.
 
+
+## Geführte Analyse und reduzierte Navigation V7.2.3
+
+Die erste Navigationsebene besteht nun aus fünf klaren Hauptbereichen:
+
+- **Start**
+- **Aktie analysieren**
+- **Portfolio**
+- **Watchlist & Ereignisse**
+- **Research & Werkzeuge**
+
+Alle bisherigen Fachseiten bleiben erhalten und sind als Unterbereiche erreichbar.
+Die neue Startseite bietet drei direkte Arbeitswege. Für Einzelaktien steht eine
+fünfstufige Research-Checkliste zur Verfügung: Geschäftsmodell, Qualität und
+Fundamentaldaten, Risiken, News und Ereignisse sowie Szenarien. Nutzer markieren
+Schritte bewusst selbst als geprüft; die Anzeige ist keine automatische
+Qualitätsbewertung und keine Anlageempfehlung.
+
+Unter den fünf Fachseiten des Analysepfads erscheinen kompakte Vor-/Zurück-Aktionen.
+Navigationswünsche werden über einen getrennten Session-State-Key verarbeitet,
+damit Streamlit-Widget-Zustände nicht nach ihrer Erzeugung verändert werden. Die
+Startseite ist auch ohne bereits geladene Marktdaten sichtbar und führt zum
+Laden eines Aktienuniversums in der Sidebar.
 
 ## UX-Grundlage V7.2.2
 

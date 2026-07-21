@@ -9,12 +9,27 @@ from .app_shell import (
     render_header,
     render_language_selector,
     render_main_navigation,
+    request_navigation,
 )
 from .company_select import company_selectbox
+from .guided_analysis import (
+    GUIDED_ANALYSIS_STEPS,
+    render_analysis_next_steps,
+    render_guided_analysis_hub,
+    render_start_page,
+)
 from .news_intelligence import render_news_intelligence
 from .page_router import UnknownPageError, dispatch_page
 from .portfolio_simulation import render_portfolio_simulation
 from .profile_automation import render_profile_automation
+from .responsive import (
+    apply_responsive_layout,
+    build_responsive_css,
+    current_display_mode,
+    is_compact_layout,
+    navigation_widget_style,
+    render_display_mode_selector,
+)
 from .scenarios import render_scenario_engine
 from .sidebar import SidebarCallbacks, render_sidebar
 from .source_monitor import render_source_monitor
@@ -31,6 +46,11 @@ from .ux_foundation import (
 )
 
 __all__ = [
+    "GUIDED_ANALYSIS_STEPS",
+    "render_analysis_next_steps",
+    "render_guided_analysis_hub",
+    "render_start_page",
+    "request_navigation",
     "render_page_guidance",
     "render_knowledge_selector",
     "render_glossary_panel",
@@ -40,6 +60,12 @@ __all__ = [
     "current_knowledge_level",
     "build_feedback_mailto",
     "DataTrustSnapshot",
+    "apply_responsive_layout",
+    "build_responsive_css",
+    "current_display_mode",
+    "is_compact_layout",
+    "navigation_widget_style",
+    "render_display_mode_selector",
     "MAIN_NAVIGATION",
     "SidebarCallbacks",
     "UnknownPageError",

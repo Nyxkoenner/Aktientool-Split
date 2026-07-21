@@ -17,10 +17,14 @@ from stock_explorer.services.app_logging import configure_application_logging
 from stock_explorer.services.universe_session import UniverseSessionStore
 from stock_explorer.ui import (
     DataTrustSnapshot,
+    apply_responsive_layout,
     render_ai_lab,
+    render_analysis_next_steps,
     render_data_trust_panel,
+    render_display_mode_selector,
     render_feedback_panel,
     render_glossary_panel,
+    render_guided_analysis_hub,
     render_header,
     render_knowledge_selector,
     render_language_selector,
@@ -29,6 +33,7 @@ from stock_explorer.ui import (
     render_portfolio_simulation,
     render_scenario_engine,
     render_source_monitor,
+    render_start_page,
 )
 from stock_explorer.ui.page_router import PageRenderer, dispatch_page
 from stock_explorer.ui.sidebar import SidebarCallbacks, render_sidebar
@@ -72,6 +77,8 @@ def _render_sidebar(language: str) -> SidebarSelection:
         clear_application_cache=clear_application_cache,
     )
     with st.sidebar:
+        render_display_mode_selector(language=language)
+        st.divider()
         render_knowledge_selector(language=language)
         st.divider()
         selection = render_sidebar(
@@ -191,6 +198,8 @@ def _routes(
     thresholds: ScannerThresholds = selection.thresholds
 
     routes: dict[str, Callable[[], None]] = {
+        "start": lambda: render_start_page(data),
+        "analysis_hub": lambda: render_guided_analysis_hub(data),
         "overview": lambda: legacy.render_overview(data),
         "data_status": lambda: legacy.render_data_status(status_summary, status_detail, data),
         "fundamentals": lambda: legacy.render_fundamentals(data),
@@ -243,17 +252,34 @@ def main() -> None:
     """Startet den modularen V7-Anwendungsablauf."""
     configure_application_logging(LOG_DIR)
     st.set_page_config(page_title=APP_TITLE, page_icon="📈", layout="wide")
+    apply_responsive_layout()
     with st.sidebar:
         render_language_selector()
     language = current_language()
     render_header(APP_VERSION)
 
     selection = _render_sidebar(language)
+    active_page = render_main_navigation()
+
+    if active_page == "start":
+        selected_constituents = selection.selected_constituents()
+        requested_tickers = selected_tickers(selected_constituents, legacy.clean_ticker)
+        snapshot = UniverseSessionStore(cast(Any, st.session_state)).snapshot(selected_constituents)
+        has_current_data = (
+            snapshot.raw_metrics is not None
+            and not snapshot.raw_metrics.empty
+            and snapshot.loaded_tickers == requested_tickers
+        )
+        if not selection.reload_clicked and not has_current_data:
+            render_start_page(pd.DataFrame())
+            st.info(t("ux.home.load_hint", language))
+            return
+
     data, histories, status_summary, status_detail = _load_and_score_universe(selection, language)
 
-    active_page = render_main_navigation()
-    render_page_guidance(active_page, language=language)
-    st.divider()
+    if active_page not in {"start", "analysis_hub"}:
+        render_page_guidance(active_page, language=language)
+        st.divider()
     dispatch_page(
         active_page,
         _routes(
@@ -264,6 +290,7 @@ def main() -> None:
             selection=selection,
         ),
     )
+    render_analysis_next_steps(active_page)
 
 
 __all__ = ["clear_application_cache", "main"]

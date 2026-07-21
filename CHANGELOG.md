@@ -1,5 +1,28 @@
 # Changelog
 
+## 7.2.4
+
+- Anzeigeprofile Automatisch, Kompakt / Smartphone und Desktop mit getrenntem Session-State.
+- CSS-Media-Queries für kleine Bildschirme sowie erzwingbare Kompaktansicht.
+- Kompakte Hauptnavigation über Selectbox; automatische und Desktopansicht behalten die horizontale Navigation.
+- Touch-Ziele von mindestens 44 Pixeln für Buttons, Downloads, Eingaben und Expander.
+- Gestapelte Startkarten, Unternehmenskennzahlen, Analyseschritte und Pfadnavigation im Kompaktmodus.
+- Horizontal scrollbar bleibende Tabellen und Tabs statt abgeschnittener Inhalte.
+- Responsive Seitenränder und Überschriftengrößen für Smartphones.
+- Neue Tests für Anzeigepräferenzen, CSS-Regeln, Navigation, Übersetzungen und Versionskonsistenz.
+
+## 7.2.3
+
+- Fünf übersichtliche Hauptbereiche ersetzen die sehr breite erste Navigationsebene.
+- Alle bisherigen Fachseiten bleiben über gruppierte Unterbereiche erreichbar.
+- Neue Startseite mit direkten Wegen zu Aktienanalyse, Portfolio und Ereignissen.
+- Fünfstufiger Aktienanalysepfad für Geschäftsmodell, Fundamentaldaten, Risiken, News und Szenarien.
+- Bewusst bestätigbare Research-Checkliste pro Aktie mit sichtbarem Fortschritt.
+- Kontextuelle Vor-, Zurück- und Übersichtsaktionen auf den Fachseiten des Analysepfads.
+- Startseite kann bereits vor dem ersten Marktdatenabruf angezeigt werden.
+- Getrennter Navigationsanforderungs-Key verhindert nachträgliche Änderungen an Streamlit-Widget-Keys.
+- Neue Tests für Navigationsgruppen, Workflow-Reihenfolge, Übersetzungen und Versionskonsistenz.
+
 ## 7.2.2
 
 - Drei Wissensmodi für Einsteiger, Fortgeschrittene und Experten mit getrenntem Session-State.

@@ -17,6 +17,7 @@ from stock_explorer.domain.ux_preferences import (
     set_knowledge_level,
 )
 from stock_explorer.i18n import current_language, normalize_page_id, t, translation_key_for_page
+from stock_explorer.ui.responsive import is_compact_layout
 
 _KNOWLEDGE_WIDGET_KEY = "knowledge_level_selector"
 
@@ -191,24 +192,26 @@ def render_data_trust_panel(
         )
     )
     with st.expander(t("ux.trust.details", selected_language), expanded=False):
-        left, right = st.columns(2)
-        left.markdown(
-            t(
-                "ux.trust.source_line",
-                selected_language,
-                provider=snapshot.provider,
-                timestamp=snapshot.timestamp or t("common.none", selected_language),
-            )
+        source_text = t(
+            "ux.trust.source_line",
+            selected_language,
+            provider=snapshot.provider,
+            timestamp=snapshot.timestamp or t("common.none", selected_language),
         )
-        right.markdown(
-            t(
-                "ux.trust.context_line",
-                selected_language,
-                coverage=coverage,
-                currency=snapshot.base_currency,
-                profile=snapshot.profile_name,
-            )
+        context_text = t(
+            "ux.trust.context_line",
+            selected_language,
+            coverage=coverage,
+            currency=snapshot.base_currency,
+            profile=snapshot.profile_name,
         )
+        if is_compact_layout():
+            st.markdown(source_text)
+            st.markdown(context_text)
+        else:
+            left, right = st.columns(2)
+            left.markdown(source_text)
+            right.markdown(context_text)
         st.info(t("ux.trust.model_notice", selected_language))
 
 
