@@ -6,6 +6,98 @@ from typing import Final
 
 UX_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
     "de": {
+        "ux.nav.main_label": "Hauptbereich auswählen",
+        "ux.nav.subpage_label": "Unterbereich",
+        "ux.nav.group.start": "Start",
+        "ux.nav.group.stocks": "Aktie analysieren",
+        "ux.nav.group.portfolio": "Portfolio",
+        "ux.nav.group.events": "Watchlist & Ereignisse",
+        "ux.nav.group.research": "Research & Werkzeuge",
+        "ux.home.title": "Was möchtest du heute untersuchen?",
+        "ux.home.intro.beginner": (
+            "Wähle einen Arbeitsweg. Das Tool führt dich Schritt für Schritt und erklärt wichtige Begriffe direkt an der passenden Stelle."
+        ),
+        "ux.home.intro.intermediate": (
+            "Starte mit einer Aktienanalyse, prüfe dein Portfolio oder arbeite neue Ereignisse aus deiner Watchlist ab."
+        ),
+        "ux.home.intro.expert": (
+            "Nutze den geführten Einstieg oder wechsle direkt in Research, Backtesting und Modellwerkzeuge."
+        ),
+        "ux.home.metric.companies": "Geladene Unternehmen",
+        "ux.home.metric.sectors": "Abgedeckte Sektoren",
+        "ux.home.metric.scored": "Unternehmen mit Score",
+        "ux.home.choose_path": "Arbeitsweg auswählen",
+        "ux.home.stock.title": "Eine Aktie verstehen",
+        "ux.home.stock.description": (
+            "Geschäftsmodell, Qualität, Risiken, Ereignisse und Szenarien in einer sinnvollen Reihenfolge prüfen."
+        ),
+        "ux.home.portfolio.title": "Mein Portfolio prüfen",
+        "ux.home.portfolio.description": (
+            "Gewichtungen, Konzentrationen, historische Entwicklung und Transaktionen untersuchen."
+        ),
+        "ux.home.events.title": "Neue Ereignisse bewerten",
+        "ux.home.events.description": (
+            "Watchlist, Meldungen, Quellenqualität und mögliche Marktreaktionen strukturiert prüfen."
+        ),
+        "ux.home.open": "Öffnen",
+        "ux.home.load_hint": (
+            "Lade links ein Aktienuniversum, sobald du Kennzahlen und konkrete Unternehmen analysieren möchtest."
+        ),
+        "ux.home.beginner_tip": (
+            "Empfehlung für den Einstieg: Beginne mit „Eine Aktie verstehen“ und arbeite die fünf Schritte nacheinander ab."
+        ),
+        "ux.home.expert_tip": (
+            "Alle bisherigen Fachseiten bleiben über die fünf Hauptbereiche erreichbar; nur die erste Navigationsebene wurde reduziert."
+        ),
+        "ux.flow.title": "Geführte Aktienanalyse",
+        "ux.flow.intro.beginner": (
+            "Wähle ein Unternehmen und bearbeite die fünf Schritte. Markiere einen Schritt erst als abgeschlossen, wenn du die Aussage selbst verstanden und geprüft hast."
+        ),
+        "ux.flow.intro.intermediate": (
+            "Der Analysepfad verbindet qualitative und quantitative Prüfung. Die Reihenfolge hilft, Bewertung nicht vor Geschäftsmodell und Risiko zu stellen."
+        ),
+        "ux.flow.intro.expert": (
+            "Der Pfad dient als reproduzierbare Research-Checkliste. Details, Rohdaten und Modelle bleiben in den jeweiligen Fachseiten verfügbar."
+        ),
+        "ux.flow.select_company": "Unternehmen für den Analysepfad",
+        "ux.flow.metric.company": "Unternehmen",
+        "ux.flow.metric.sector": "Sektor",
+        "ux.flow.metric.quality": "Qualitäts-Score",
+        "ux.flow.metric.value": "Value-Score",
+        "ux.flow.progress": "{completed} von {total} Schritten bewusst bestätigt",
+        "ux.flow.step.business": "Geschäftsmodell verstehen",
+        "ux.flow.step.business.description": (
+            "Prüfe Produkte, Segmente, Regionen, Wettbewerbsvorteile und die wichtigsten Abhängigkeiten."
+        ),
+        "ux.flow.step.quality": "Qualität und Fundamentaldaten prüfen",
+        "ux.flow.step.quality.description": (
+            "Ordne Wachstum, Margen, Cashflow, Bilanz und Ausschüttungen gemeinsam ein."
+        ),
+        "ux.flow.step.risk": "Risiken und Kursverhalten untersuchen",
+        "ux.flow.step.risk.description": (
+            "Prüfe Volatilität, Drawdowns, Verschuldung und mögliche Gegenargumente zur Investmentthese."
+        ),
+        "ux.flow.step.events": "News und Ereignisse bewerten",
+        "ux.flow.step.events.description": (
+            "Trenne Nachrichtenton, Geschäftsfolgen und mögliche Aktienwirkung und kontrolliere die Quelle."
+        ),
+        "ux.flow.step.scenario": "Szenarien durchspielen",
+        "ux.flow.step.scenario.description": (
+            "Teste mindestens ein schwaches, ein neutrales und ein starkes Annahmenpaket."
+        ),
+        "ux.flow.open_step": "Schritt öffnen",
+        "ux.flow.mark_done": "Diesen Schritt als geprüft markieren",
+        "ux.flow.next_recommended": "Nächster empfohlener Schritt: {step}",
+        "ux.flow.complete": (
+            "Alle fünf Schritte sind bestätigt. Prüfe deine Notizen und dokumentiere auch die stärksten Gegenargumente."
+        ),
+        "ux.flow.disclaimer": (
+            "Die Checkliste dokumentiert deinen Arbeitsfortschritt. Sie ist keine Qualitätszertifizierung und keine Anlageempfehlung."
+        ),
+        "ux.flow.footer": "Geführter Analysepfad",
+        "ux.flow.previous": "Zurück: {step}",
+        "ux.flow.next": "Weiter: {step}",
+        "ux.flow.back_to_hub": "Zur Analyseübersicht",
         "ux.knowledge.label": "Wissensmodus",
         "ux.knowledge.help": (
             "Der Wissensmodus verändert Erklärungen und Hilfen, nicht die zugrunde liegenden Berechnungen."
@@ -64,6 +156,98 @@ UX_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         ),
     },
     "en": {
+        "ux.nav.main_label": "Select main section",
+        "ux.nav.subpage_label": "Subsection",
+        "ux.nav.group.start": "Start",
+        "ux.nav.group.stocks": "Analyse a stock",
+        "ux.nav.group.portfolio": "Portfolio",
+        "ux.nav.group.events": "Watchlist & events",
+        "ux.nav.group.research": "Research & tools",
+        "ux.home.title": "What would you like to investigate today?",
+        "ux.home.intro.beginner": (
+            "Choose a workflow. The tool guides you step by step and explains important terms where they are needed."
+        ),
+        "ux.home.intro.intermediate": (
+            "Start a stock analysis, review your portfolio or work through new events from your watchlist."
+        ),
+        "ux.home.intro.expert": (
+            "Use the guided entry point or move directly to research, backtesting and model tools."
+        ),
+        "ux.home.metric.companies": "Loaded companies",
+        "ux.home.metric.sectors": "Covered sectors",
+        "ux.home.metric.scored": "Companies with scores",
+        "ux.home.choose_path": "Choose a workflow",
+        "ux.home.stock.title": "Understand a stock",
+        "ux.home.stock.description": (
+            "Review the business model, quality, risks, events and scenarios in a sensible order."
+        ),
+        "ux.home.portfolio.title": "Review my portfolio",
+        "ux.home.portfolio.description": (
+            "Inspect weights, concentration, historical performance and transactions."
+        ),
+        "ux.home.events.title": "Assess new events",
+        "ux.home.events.description": (
+            "Review watchlist items, news, source quality and possible market reactions in a structured way."
+        ),
+        "ux.home.open": "Open",
+        "ux.home.load_hint": (
+            "Load a stock universe in the sidebar when you are ready to analyse metrics and specific companies."
+        ),
+        "ux.home.beginner_tip": (
+            "Recommended starting point: choose “Understand a stock” and work through the five steps in order."
+        ),
+        "ux.home.expert_tip": (
+            "All existing specialist pages remain available through the five main sections; only the first navigation level was reduced."
+        ),
+        "ux.flow.title": "Guided stock analysis",
+        "ux.flow.intro.beginner": (
+            "Choose a company and complete the five steps. Mark a step complete only after you have understood and checked the conclusion yourself."
+        ),
+        "ux.flow.intro.intermediate": (
+            "The workflow combines qualitative and quantitative review. Its order helps prevent valuation from coming before business model and risk."
+        ),
+        "ux.flow.intro.expert": (
+            "The workflow acts as a reproducible research checklist. Details, raw data and models remain available on the specialist pages."
+        ),
+        "ux.flow.select_company": "Company for the analysis workflow",
+        "ux.flow.metric.company": "Company",
+        "ux.flow.metric.sector": "Sector",
+        "ux.flow.metric.quality": "Quality score",
+        "ux.flow.metric.value": "Value score",
+        "ux.flow.progress": "{completed} of {total} steps explicitly confirmed",
+        "ux.flow.step.business": "Understand the business model",
+        "ux.flow.step.business.description": (
+            "Review products, segments, regions, competitive advantages and major dependencies."
+        ),
+        "ux.flow.step.quality": "Review quality and fundamentals",
+        "ux.flow.step.quality.description": (
+            "Assess growth, margins, cash flow, balance sheet and distributions together."
+        ),
+        "ux.flow.step.risk": "Inspect risks and price behaviour",
+        "ux.flow.step.risk.description": (
+            "Review volatility, drawdowns, debt and possible counterarguments to the investment thesis."
+        ),
+        "ux.flow.step.events": "Assess news and events",
+        "ux.flow.step.events.description": (
+            "Separate headline tone, business consequences and possible stock impact, and verify the source."
+        ),
+        "ux.flow.step.scenario": "Run scenarios",
+        "ux.flow.step.scenario.description": (
+            "Test at least one downside, one neutral and one upside set of assumptions."
+        ),
+        "ux.flow.open_step": "Open step",
+        "ux.flow.mark_done": "Mark this step as reviewed",
+        "ux.flow.next_recommended": "Next suggested step: {step}",
+        "ux.flow.complete": (
+            "All five steps are confirmed. Review your notes and document the strongest counterarguments as well."
+        ),
+        "ux.flow.disclaimer": (
+            "The checklist records your workflow progress. It is not a quality certification or investment recommendation."
+        ),
+        "ux.flow.footer": "Guided analysis workflow",
+        "ux.flow.previous": "Back: {step}",
+        "ux.flow.next": "Next: {step}",
+        "ux.flow.back_to_hub": "Back to analysis overview",
         "ux.knowledge.label": "Knowledge mode",
         "ux.knowledge.help": (
             "Knowledge mode changes explanations and guidance, not the underlying calculations."
@@ -125,3 +309,35 @@ UX_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
 
 
 __all__ = ["UX_TRANSLATIONS"]
+
+UX_TRANSLATIONS["de"].update(
+    {
+        "ux.display.label": "Darstellung",
+        "ux.display.help": (
+            "Auto passt die Oberfläche per Bildschirmbreite an. Kompakt erzwingt eine schmale, "
+            "touchfreundliche Ansicht. Desktop behält die breite Darstellung bei."
+        ),
+        "ux.display.auto": "Automatisch",
+        "ux.display.compact": "Kompakt / Smartphone",
+        "ux.display.desktop": "Desktop",
+        "ux.display.caption.auto": "Passt Spalten, Navigation und Tabellen automatisch an kleine Bildschirme an.",
+        "ux.display.caption.compact": "Einspaltige Navigation, größere Touch-Ziele und gestapelte Karten.",
+        "ux.display.caption.desktop": "Breite Tabellen, mehrspaltige Karten und horizontale Hauptnavigation.",
+    }
+)
+
+UX_TRANSLATIONS["en"].update(
+    {
+        "ux.display.label": "Display",
+        "ux.display.help": (
+            "Auto adapts the interface to the screen width. Compact forces a narrow, touch-friendly "
+            "layout. Desktop keeps the wide presentation."
+        ),
+        "ux.display.auto": "Automatic",
+        "ux.display.compact": "Compact / smartphone",
+        "ux.display.desktop": "Desktop",
+        "ux.display.caption.auto": "Automatically adapts columns, navigation and tables on small screens.",
+        "ux.display.caption.compact": "Single-column navigation, larger touch targets and stacked cards.",
+        "ux.display.caption.desktop": "Wide tables, multi-column cards and horizontal main navigation.",
+    }
+)

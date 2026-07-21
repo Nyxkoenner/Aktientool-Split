@@ -24,8 +24,18 @@ class KnowledgeLevel(StrEnum):
     EXPERT = "expert"
 
 
+class DisplayMode(StrEnum):
+    """Breiten- und Bedienprofil der Oberfläche."""
+
+    AUTO = "auto"
+    COMPACT = "compact"
+    DESKTOP = "desktop"
+
+
 DEFAULT_KNOWLEDGE_LEVEL = KnowledgeLevel.INTERMEDIATE
 KNOWLEDGE_SESSION_KEY = "knowledge_level"
+DEFAULT_DISPLAY_MODE = DisplayMode.AUTO
+DISPLAY_MODE_SESSION_KEY = "display_mode"
 
 
 def normalize_knowledge_level(value: object) -> KnowledgeLevel:
@@ -54,11 +64,43 @@ def set_knowledge_level(
     return selected
 
 
+def normalize_display_mode(value: object) -> DisplayMode:
+    """Normalisiert eine Anzeigeauswahl auf einen unterstützten Modus."""
+    candidate = str(value or "").strip().lower()
+    try:
+        return DisplayMode(candidate)
+    except ValueError:
+        return DEFAULT_DISPLAY_MODE
+
+
+def display_mode_from_state(state: SessionStateLike | None = None) -> DisplayMode:
+    """Liest den Anzeigemodus aus einem Session-State-ähnlichen Objekt."""
+    if state is not None and DISPLAY_MODE_SESSION_KEY in state:
+        return normalize_display_mode(state[DISPLAY_MODE_SESSION_KEY])
+    return DEFAULT_DISPLAY_MODE
+
+
+def set_display_mode(
+    mode: DisplayMode | str,
+    state: SessionStateLike,
+) -> DisplayMode:
+    """Speichert einen normalisierten Anzeigemodus."""
+    selected = normalize_display_mode(mode)
+    state[DISPLAY_MODE_SESSION_KEY] = selected.value
+    return selected
+
+
 __all__ = [
+    "DEFAULT_DISPLAY_MODE",
     "DEFAULT_KNOWLEDGE_LEVEL",
+    "DISPLAY_MODE_SESSION_KEY",
     "KNOWLEDGE_SESSION_KEY",
+    "DisplayMode",
     "KnowledgeLevel",
+    "display_mode_from_state",
     "knowledge_level_from_state",
+    "normalize_display_mode",
     "normalize_knowledge_level",
+    "set_display_mode",
     "set_knowledge_level",
 ]
