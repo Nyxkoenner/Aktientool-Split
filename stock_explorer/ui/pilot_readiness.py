@@ -1,8 +1,7 @@
-"""Onboarding, Demo, strukturiertes Feedback und Pilot-Auswertung."""
+"""Onboarding, Demo und optionales Feedback per E-Mail."""
 
 from __future__ import annotations
 
-import os
 import secrets
 from html import escape
 from typing import Any, Final, Protocol
@@ -18,7 +17,7 @@ from stock_explorer.domain.ux_preferences import (
     set_knowledge_level,
 )
 from stock_explorer.i18n import current_language, normalize_page_id, t
-from stock_explorer.services.pilot_store import PilotStore, verify_admin_pin
+from stock_explorer.services.pilot_store import PilotStore
 from stock_explorer.ui.app_shell import request_navigation
 from stock_explorer.ui.responsive import current_display_mode, is_compact_layout
 from stock_explorer.ui.ux_foundation import build_feedback_mailto, current_knowledge_level
@@ -27,8 +26,7 @@ _ONBOARDING_COMPLETE_KEY: Final = "pilot_onboarding_complete"
 _TELEMETRY_CONSENT_KEY: Final = "pilot_telemetry_consent"
 _SESSION_ID_KEY: Final = "pilot_session_id"
 _LAST_PAGE_EVENT_KEY: Final = "pilot_last_page_event"
-_ADMIN_UNLOCKED_KEY: Final = "pilot_admin_unlocked"
-_LAST_FEEDBACK_KEY: Final = "pilot_last_feedback"
+_PREPARED_FEEDBACK_KEY: Final = "pilot_prepared_feedback"
 
 
 class _TaskStateLike(Protocol):
@@ -274,8 +272,21 @@ def _feedback_mailto_html(link: str, label: str) -> str:
     )
 
 
+def _build_pilot_feedback_message(
+    *,
+    rating: int,
+    message: str,
+    contact_email: str,
+    language: str,
+) -> str:
+    """Baut den sichtbaren Mailtext ohne lokale Speicherung auf."""
+    rating_label = "Bewertung" if language == "de" else "Rating"
+    contact_label = "Kontakt für Rückfragen" if language == "de" else "Contact for follow-up"
+    contact_value = contact_email.strip() or "–"
+    return f"{rating_label}: {rating}/5\n{contact_label}: {contact_value}\n\n{message.strip()}"
+
+
 def _render_structured_feedback(
-    store: PilotStore,
     *,
     version: str,
     recipient: str,
@@ -301,136 +312,59 @@ def _render_structured_feedback(
             t("pilot.feedback.message", language),
             placeholder=t("pilot.feedback.placeholder", language),
             height=150,
+            max_chars=2000,
             key="pilot_feedback_message",
         )
         contact_email = st.text_input(
             t("pilot.feedback.email", language),
+            max_chars=254,
             key="pilot_feedback_email",
         )
-        consent = st.checkbox(
-            t("pilot.feedback.storage_consent", language),
-            key="pilot_feedback_storage_consent",
-        )
         submitted = st.form_submit_button(
-            t("pilot.feedback.save", language),
+            t("pilot.feedback.prepare_email", language),
             type="primary",
             use_container_width=True,
         )
 
     if submitted:
-        if not consent:
-            st.error(t("pilot.feedback.consent_required", language))
+        if len(message.strip()) < 3:
+            st.error(t("pilot.feedback.message_required", language))
         else:
-            try:
-                feedback = store.save_feedback(
-                    category=str(category),
-                    rating=int(rating),
-                    message=message,
-                    contact_email=contact_email,
-                    page_id=normalize_page_id(st.session_state.get("main_navigation")),
-                    app_version=version,
-                    language=language,
-                    knowledge_level=current_knowledge_level().value,
-                    display_mode=current_display_mode().value,
-                    session_id=pilot_session_id(),
-                )
-            except ValueError as exc:
-                st.error(str(exc))
-            else:
-                st.session_state[_LAST_FEEDBACK_KEY] = feedback.to_dict()
-                _set_task_completed("send_feedback", True, st.session_state)
-                st.success(t("pilot.feedback.saved", language, reference=feedback.reference_id))
+            st.session_state[_PREPARED_FEEDBACK_KEY] = {
+                "category": str(category),
+                "rating": int(rating),
+                "message": message.strip(),
+                "contact_email": contact_email.strip(),
+                "page_id": normalize_page_id(st.session_state.get("main_navigation")),
+                "knowledge_level": current_knowledge_level().value,
+            }
+            _set_task_completed("send_feedback", True, st.session_state)
+            st.success(t("pilot.feedback.prepared", language))
 
-    last_feedback = st.session_state.get(_LAST_FEEDBACK_KEY)
-    if isinstance(last_feedback, dict):
-        reference = str(last_feedback.get("reference_id", ""))
-        saved_message = str(last_feedback.get("message", ""))
-        saved_category = str(last_feedback.get("category", "idea"))
+    prepared = st.session_state.get(_PREPARED_FEEDBACK_KEY)
+    if isinstance(prepared, dict):
+        prepared_category = str(prepared.get("category", "idea"))
+        mail_message = _build_pilot_feedback_message(
+            rating=int(prepared.get("rating", 4)),
+            message=str(prepared.get("message", "")),
+            contact_email=str(prepared.get("contact_email", "")),
+            language=language,
+        )
         link = build_feedback_mailto(
             recipient=recipient,
             version=version,
-            page_id=str(last_feedback.get("page_id", "pilot_center")),
+            page_id=str(prepared.get("page_id", "pilot_center")),
             language=language,
-            knowledge_level=str(last_feedback.get("knowledge_level", "intermediate")),
-            category=t(f"pilot.feedback.category.{saved_category}", language),
-            message=f"Referenz: {reference}\n\n{saved_message}",
+            knowledge_level=str(prepared.get("knowledge_level", "intermediate")),
+            category=t(f"pilot.feedback.category.{prepared_category}", language),
+            message=mail_message,
         )
         st.markdown(
-            _feedback_mailto_html(link, t("pilot.feedback.email_copy", language)),
+            _feedback_mailto_html(link, t("pilot.feedback.open_email", language)),
             unsafe_allow_html=True,
         )
+        st.caption(t("pilot.feedback.email_optional", language, recipient=recipient))
     st.caption(t("pilot.feedback.privacy", language))
-
-
-def _configured_admin_pin() -> str | None:
-    configured = os.getenv("PILOT_ADMIN_PIN")
-    if configured:
-        return configured
-    try:
-        secret_value: Any = st.secrets.get("pilot_admin_pin")
-    except (FileNotFoundError, KeyError, RuntimeError):
-        return None
-    return str(secret_value) if secret_value else None
-
-
-def _render_admin(store: PilotStore, language: str) -> None:
-    st.subheader(t("pilot.admin.title", language))
-    configured_pin = _configured_admin_pin()
-    if not configured_pin:
-        st.info(t("pilot.admin.not_configured", language))
-        st.code('PILOT_ADMIN_PIN="dein-lokaler-pin"', language="text")
-        return
-
-    if not st.session_state.get(_ADMIN_UNLOCKED_KEY):
-        pin = st.text_input(
-            t("pilot.admin.pin", language),
-            type="password",
-            key="pilot_admin_pin_input",
-        )
-        if st.button(t("pilot.admin.unlock", language), key="pilot_admin_unlock"):
-            if verify_admin_pin(pin, configured_pin):
-                st.session_state[_ADMIN_UNLOCKED_KEY] = True
-                st.rerun()
-            st.error(t("pilot.admin.wrong_pin", language))
-        return
-
-    summary = store.summary()
-    metrics = st.columns(1 if is_compact_layout() else 3)
-    metrics[0].metric(t("pilot.admin.feedback_count", language), summary.feedback_count)
-    metrics[min(1, len(metrics) - 1)].metric(t("pilot.admin.event_count", language), summary.event_count)
-    rating = "–" if summary.average_rating is None else f"{summary.average_rating:.1f} / 5"
-    metrics[min(2, len(metrics) - 1)].metric(t("pilot.admin.rating", language), rating)
-
-    feedback = store.feedback_records()
-    if feedback:
-        frame = pd.DataFrame(feedback)
-        preferred_columns = [
-            "reference_id",
-            "created_at",
-            "category",
-            "rating",
-            "message",
-            "contact_email",
-            "page_id",
-        ]
-        visible = [column for column in preferred_columns if column in frame.columns]
-        st.dataframe(frame[visible], use_container_width=True, hide_index=True)
-        st.download_button(
-            t("pilot.admin.download", language),
-            data=store.feedback_csv_bytes(),
-            file_name="pilot_feedback.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
-    else:
-        st.info(t("pilot.admin.no_feedback", language))
-
-    if summary.page_counts:
-        page_frame = pd.DataFrame(
-            sorted(summary.page_counts.items(), key=lambda item: item[1], reverse=True),
-            columns=[t("pilot.admin.page", language), t("pilot.admin.views", language)],
-        )
-        st.dataframe(page_frame, use_container_width=True, hide_index=True)
 
 
 def render_pilot_center(
@@ -440,7 +374,7 @@ def render_pilot_center(
     version: str,
     recipient: str,
 ) -> None:
-    """Rendert Demo, Testaufgaben, Feedback und lokale Admin-Auswertung."""
+    """Rendert Demo, Testaufgaben und optionales E-Mail-Feedback."""
     language = current_language()
     st.header(t("pilot.center.title", language))
     st.write(t("pilot.center.intro", language))
@@ -452,12 +386,11 @@ def render_pilot_center(
         help=t("pilot.center.telemetry_help", language),
     )
     st.caption(t("pilot.center.telemetry_caption", language))
-    demo_tab, tasks_tab, feedback_tab, admin_tab = st.tabs(
+    demo_tab, tasks_tab, feedback_tab = st.tabs(
         [
             t("pilot.center.tab.demo", language),
             t("pilot.center.tab.tasks", language),
             t("pilot.center.tab.feedback", language),
-            t("pilot.center.tab.admin", language),
         ]
     )
     with demo_tab:
@@ -466,13 +399,10 @@ def render_pilot_center(
         _render_tasks(language)
     with feedback_tab:
         _render_structured_feedback(
-            store,
             version=version,
             recipient=recipient,
             language=language,
         )
-    with admin_tab:
-        _render_admin(store, language)
 
 
 __all__ = [

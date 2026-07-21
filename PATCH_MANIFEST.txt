@@ -1,10 +1,14 @@
-V7.2.9 – Einheiten in Analystenschätzungen
+V7.2.10 – Optionales Pilot-Feedback per E-Mail
 
-ERSETZEN:
-stock_explorer/legacy_app.py
-stock_explorer/__init__.py
-stock_explorer/config.py
+Ersetzt:
+- README.md
+- CHANGELOG.md
+- stock_explorer/__init__.py
+- stock_explorer/config.py
+- stock_explorer/ui/pilot_readiness.py
+- stock_explorer/i18n/ux_translations.py
 
-NEU:
-stock_explorer/domain/analyst_formatting.py
-tests/test_analyst_formatting_v729.py
+Neu:
+- tests/test_optional_feedback_email_v7210.py
+- PATCH_INSTALLATION.md
+- PATCH_MANIFEST.txt
