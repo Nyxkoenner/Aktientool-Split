@@ -1,8 +1,28 @@
-# Aktien Explorer V7.2
+# Aktien Explorer V7.2.2
 
 V6.5 erweitert die Portfolio-Simulation um ein echtes, ereignisbasiertes
 Transaktionsmodell. Die bisherige Gewichtungssimulation bleibt als zweiter Modus
 weiterhin verfügbar.
+
+
+## UX-Grundlage V7.2.2
+
+Die Oberfläche unterstützt drei Wissensmodi: **Einsteiger**, **Fortgeschritten**
+und **Experte**. Die Auswahl verändert Erklärungen, Hilfetexte und empfohlene
+Arbeitsschritte, nicht die zugrunde liegenden Berechnungen. Der bestehende
+Funktionsumfang bleibt vollständig verfügbar.
+
+Neu hinzugekommen sind:
+
+- seitenspezifische Orientierung passend zum Wissensstand
+- ein zweisprachiges, durchsuchbares Börsenlexikon
+- kuratierte externe Vertiefungslinks, unter anderem zu Wikipedia
+- eine einheitliche Anzeige von Datenstand, Hauptquelle, Abdeckung und Modellgrenzen
+- ein globaler Feedback-Bereich mit vorbereiteter E-Mail an `nykoenner@gmail.com`
+- datensparsame Feedback-Metadaten ohne automatische Portfolio-, Dokument- oder Modelldaten
+
+Der Feedback-Link öffnet das lokal eingerichtete E-Mail-Programm. Die Nachricht
+wird nicht automatisch versendet, sondern erst nach Bestätigung durch den Nutzer.
 
 ## Architektur-Release V7.0
 

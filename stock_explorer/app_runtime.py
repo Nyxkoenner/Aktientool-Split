@@ -11,15 +11,21 @@ import streamlit as st
 
 from stock_explorer import legacy_app as legacy
 from stock_explorer.application import ScannerThresholds, SidebarSelection, selected_tickers
-from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY, LOG_DIR
-from stock_explorer.i18n import current_language, t
+from stock_explorer.config import APP_TITLE, APP_VERSION, BASE_CURRENCY, FEEDBACK_EMAIL, LOG_DIR
+from stock_explorer.i18n import current_language, normalize_page_id, t
 from stock_explorer.services.app_logging import configure_application_logging
 from stock_explorer.services.universe_session import UniverseSessionStore
 from stock_explorer.ui import (
+    DataTrustSnapshot,
     render_ai_lab,
+    render_data_trust_panel,
+    render_feedback_panel,
+    render_glossary_panel,
     render_header,
+    render_knowledge_selector,
     render_language_selector,
     render_main_navigation,
+    render_page_guidance,
     render_portfolio_simulation,
     render_scenario_engine,
     render_source_monitor,
@@ -66,13 +72,24 @@ def _render_sidebar(language: str) -> SidebarSelection:
         clear_application_cache=clear_application_cache,
     )
     with st.sidebar:
-        return render_sidebar(
+        render_knowledge_selector(language=language)
+        st.divider()
+        selection = render_sidebar(
             language=language,
             provider_name=legacy.MARKET_PROVIDER.name,
             index_options=legacy.INDEX_OPTIONS,
             strategy_profiles=legacy.STRATEGY_PROFILES,
             callbacks=callbacks,
         )
+        st.divider()
+        render_glossary_panel(language=language)
+        render_feedback_panel(
+            version=APP_VERSION,
+            page_id=normalize_page_id(st.session_state.get("main_navigation")),
+            recipient=FEEDBACK_EMAIL,
+            language=language,
+        )
+        return selection
 
 
 def _load_and_score_universe(
@@ -135,21 +152,16 @@ def _render_status_caption(
     profile_name: str,
     language: str,
 ) -> None:
-    requested_count = int(status_summary.get("angefragt", 0))
-    loaded_count = int(status_summary.get("analysiert", 0))
     coverage = legacy.safe_float(status_summary.get("abdeckung_prozent"))
-    coverage_label = legacy.format_percent(coverage, 1) if coverage is not None else "–"
-    st.caption(
-        t(
-            "status.summary",
-            language,
+    render_data_trust_panel(
+        DataTrustSnapshot(
             timestamp=last_refresh,
-            loaded=loaded_count,
-            requested=requested_count,
-            coverage=coverage_label,
-            profile=profile_name,
-            currency=BASE_CURRENCY,
-        )
+            provider=legacy.MARKET_PROVIDER.name,
+            coverage_percent=coverage,
+            base_currency=BASE_CURRENCY,
+            profile_name=profile_name,
+        ),
+        language=language,
     )
 
 
@@ -240,6 +252,7 @@ def main() -> None:
     data, histories, status_summary, status_detail = _load_and_score_universe(selection, language)
 
     active_page = render_main_navigation()
+    render_page_guidance(active_page, language=language)
     st.divider()
     dispatch_page(
         active_page,

@@ -18,8 +18,28 @@ from .profile_automation import render_profile_automation
 from .scenarios import render_scenario_engine
 from .sidebar import SidebarCallbacks, render_sidebar
 from .source_monitor import render_source_monitor
+from .ux_foundation import (
+    DataTrustSnapshot,
+    build_feedback_mailto,
+    current_knowledge_level,
+    quality_key_from_coverage,
+    render_data_trust_panel,
+    render_feedback_panel,
+    render_glossary_panel,
+    render_knowledge_selector,
+    render_page_guidance,
+)
 
 __all__ = [
+    "render_page_guidance",
+    "render_knowledge_selector",
+    "render_glossary_panel",
+    "render_feedback_panel",
+    "render_data_trust_panel",
+    "quality_key_from_coverage",
+    "current_knowledge_level",
+    "build_feedback_mailto",
+    "DataTrustSnapshot",
     "MAIN_NAVIGATION",
     "SidebarCallbacks",
     "UnknownPageError",

@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final
 
+from .ux_translations import UX_TRANSLATIONS
+
 DEFAULT_LANGUAGE: Final = "de"
 SUPPORTED_LANGUAGES: Final[dict[str, str]] = {
     "de": "Deutsch",
@@ -1298,6 +1300,9 @@ _AI_MODEL_TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
 }
 
 for _language, _messages in _AI_MODEL_TRANSLATIONS.items():
+    TRANSLATIONS[_language].update(_messages)
+
+for _language, _messages in UX_TRANSLATIONS.items():
     TRANSLATIONS[_language].update(_messages)
 
 
